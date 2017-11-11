@@ -19,11 +19,10 @@ resources:
             enabled: true
             minNodeCount: 1
             maxNodeCount: 50
-          management:
-            autoRepair: true
           config:
             machineType: {{ hub.k8s.machineType }}
             diskSizeGb: {{ hub.k8s.bootDiskSizeGb }}
+            imageType: ubuntu
             oauthScopes:
               - https://www.googleapis.com/auth/compute
               - https://www.googleapis.com/auth/devstorage.read_only
