@@ -1,11 +1,11 @@
 resources:
 {%- for hub in hubs %}
 - type: container.v1.cluster
-  name: cluster-{{ hub.name }}
+  name: {{ deployment }}-cluster-{{ hub.name }}
   properties:
     zone: {{ hub.zone }}
     cluster:
-      name: cluster-{{ hub.name }}
+      name: {{ deployment }}-cluster-{{ hub.name }}
       network: default
       addonsConfig:
         httpLoadBalancing:
@@ -29,13 +29,13 @@ resources:
               - https://www.googleapis.com/auth/logging.write
               - https://www.googleapis.com/auth/monitoring
 - type: compute.v1.disk
-  name: nfs-disk-{{ hub.name }}
+  name: {{ deployment }}-nfs-disk-{{ hub.name }}
   properties:
     zone: {{ hub.zone }}
     sizeGb: {{ hub.nfs.dataDiskSizeGb }}
     type: https://www.googleapis.com/compute/v1/projects/{{ project }}/zones/{{ hub.zone }}/diskTypes/pd-ssd
 - type: compute.v1.instance
-  name: nfs-vm-{{ hub.name }}
+  name: {{ deployment }}-nfs-vm-{{ hub.name }}
   properties:
     zone: {{ hub.zone }}
     machineType: https://www.googleapis.com/compute/v1/projects/{{ project }}/zones/{{ hub.zone }}/machineTypes/{{ hub.nfs.machineType }}
@@ -45,11 +45,11 @@ resources:
       boot: true
       autoDelete: true
       initializeParams:
-        diskName: boot-nfs-vm-{{ hub.name }}
+        diskName: boot-nfs-{{ deployment }}-{{ hub.name }}
         sourceImage: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/family/ubuntu-1710
     - deviceName: nfs-disk-{{ hub.name }}
       type: PERSISTENT
-      source: $(ref.nfs-disk-{{ hub.name }}.selfLink)
+      source: $(ref.{{ deployment }}-nfs-disk-{{ hub.name }}.selfLink)
       autoDelete: false
     networkInterfaces:
     - network: https://www.googleapis.com/compute/v1/projects/{{ project }}/global/networks/default

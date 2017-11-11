@@ -18,9 +18,11 @@ def render_template(name, data):
     return template_env.get_template(name).render(data)
 
 
-def get_data():
+def get_data(deployment):
     with open('config.yaml') as f:
-        return yaml.load(f)
+        data = yaml.load(f)
+    data['deployment'] = deployment
+    return data
 
 def gcloud(*args):
     logging.info("Executing gcloud", ' '.join(args))
@@ -32,7 +34,7 @@ def gcloud(*args):
 @click.option('--dry-run', default=False, help='Do not actually run commands, just do a dry run', is_flag=True)
 @click.option('--debug', default=False, help='Print out debug info', is_flag=True)
 def gdm(deployment, create, dry_run, debug):
-    data = get_data()
+    data = get_data(deployment)
     gdm = render_template('gdm.yaml', data)
     if debug:
         logging.info(gdm)
