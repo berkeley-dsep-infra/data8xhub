@@ -23,6 +23,10 @@ resources:
             machineType: {{ hub.k8s.machineType }}
             diskSizeGb: {{ hub.k8s.bootDiskSizeGb }}
             imageType: ubuntu
+            metadata:
+              deployment: {{ deployment }}
+              cluster: {{ hub.name }}
+              nfsrole: client
             oauthScopes:
               - https://www.googleapis.com/auth/compute
               - https://www.googleapis.com/auth/devstorage.read_only
@@ -39,6 +43,10 @@ resources:
   properties:
     zone: {{ hub.zone }}
     machineType: https://www.googleapis.com/compute/v1/projects/{{ project }}/zones/{{ hub.zone }}/machineTypes/{{ hub.nfs.machineType }}
+    metadata:
+      deployment: {{ deployment }}
+      cluster: {{ hub.name }}
+      nfsrole: server
     disks:
     - deviceName: boot
       type: PERSISTENT
