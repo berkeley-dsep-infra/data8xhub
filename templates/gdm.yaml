@@ -1,11 +1,11 @@
 resources:
-{%- for hub in hubs %}
+{%- for cluster in clusters %}
 - type: container.v1.cluster
-  name: {{ deployment }}-cluster-{{ hub.name }}
+  name: {{ deployment }}-cluster-{{ cluster.name }}
   properties:
-    zone: {{ hub.zone }}
+    zone: {{ cluster.zone }}
     cluster:
-      name: {{ deployment }}-cluster-{{ hub.name }}
+      name: {{ deployment }}-cluster-{{ cluster.name }}
       network: default
       addonsConfig:
         httpLoadBalancing:
@@ -20,34 +20,36 @@ resources:
             minNodeCount: 1
             maxNodeCount: 50
           config:
-            machineType: {{ hub.k8s.machineType }}
-            diskSizeGb: {{ hub.k8s.bootDiskSizeGb }}
+            machineType: {{ cluster.machineType }}
+            diskSizeGb: {{ cluster.bootDiskSizeGb }}
             imageType: ubuntu
             metadata:
               deployment: {{ deployment }}
-              cluster: {{ hub.name }}
-              nfsrole: client
+              cluster: {{ cluster.name }}
             oauthScopes:
               - https://www.googleapis.com/auth/compute
               - https://www.googleapis.com/auth/devstorage.read_only
               - https://www.googleapis.com/auth/logging.write
               - https://www.googleapis.com/auth/monitoring
+{%- for hub in cluster.hubs %}
 - type: compute.v1.disk
   name: {{ deployment }}-nfs-disk-{{ hub.name }}
   properties:
-    zone: {{ hub.zone }}
+    zone: {{ cluster.zone }}
     sizeGb: {{ hub.nfs.dataDiskSizeGb }}
-    type: https://www.googleapis.com/compute/v1/projects/{{ project }}/zones/{{ hub.zone }}/diskTypes/pd-ssd
+    type: https://www.googleapis.com/compute/v1/projects/{{ project }}/zones/{{ cluster.zone }}/diskTypes/pd-ssd
 - type: compute.v1.instance
   name: {{ deployment }}-nfs-vm-{{ hub.name }}
   properties:
-    zone: {{ hub.zone }}
-    machineType: https://www.googleapis.com/compute/v1/projects/{{ project }}/zones/{{ hub.zone }}/machineTypes/{{ hub.nfs.machineType }}
+    zone: {{ cluster.zone }}
+    machineType: https://www.googleapis.com/compute/v1/projects/{{ project }}/zones/{{ cluster.zone }}/machineTypes/{{ hub.nfs.machineType }}
     metadata:
       items:
        - key: deployment
          value: {{ deployment }}
        - key: cluster
+         value: {{ cluster.name }}
+       - key: hub
          value: {{ hub.name }}
        - key: startup-script
          value: |
@@ -74,4 +76,5 @@ resources:
       accessConfigs:
       - name: External NAT
         type: ONE_TO_ONE_NAT
+{% endfor %}
 {% endfor %}
