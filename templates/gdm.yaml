@@ -44,9 +44,18 @@ resources:
     zone: {{ hub.zone }}
     machineType: https://www.googleapis.com/compute/v1/projects/{{ project }}/zones/{{ hub.zone }}/machineTypes/{{ hub.nfs.machineType }}
     metadata:
-      deployment: {{ deployment }}
-      cluster: {{ hub.name }}
-      nfsrole: server
+      items:
+       - key: deployment
+         value: {{ deployment }}
+       - key: cluster
+         value: {{ hub.name }}
+       - key: startup-script
+         value: |
+           #!/bin/bash
+           CLONE_PATH=/var/lib/ansible
+           sudo apt-get install --yes ansible git
+           sudo git clone http://github.com/berkeley-dsep-infra/data8xhub ${CLONE_PATH}
+           sudo ansible-playbook -c local -i localhost, ${CLONE_PATH}/ansible/playbook.yml
     disks:
     - deviceName: boot
       type: PERSISTENT

@@ -7,7 +7,7 @@
         name: "ansible-run"
         minute: "*/20"
         hour: "*"
-        job: "cd /var/lib/ansible && git pull origin master && ansible-playbook /var/lib/ansible/ansible/playbook.yml >> /var/log/ansible.log"
+        job: "cd /var/lib/ansible && git pull origin master && ansible-playbook -c local -i localhost, /var/lib/ansible/ansible/playbook.yml >> /var/log/ansible.log"
 
     - name: install zfsutils-linux
       apt:
