@@ -1,0 +1,10 @@
+anongid: 1000
+anonuid: 1000
+export_path: /export/pool0/homes
+link_dirname: /data
+link_basename: homes
+mount_path: /mnt/homes
+mount_options: soft,timeo=100,nosuid
+nfs_client_subnet: 10.0.0.0/8
+nfs_server_host: nfsserver
+zfs_dataset: pool0/homes
