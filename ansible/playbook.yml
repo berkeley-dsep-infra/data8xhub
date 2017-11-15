@@ -63,23 +63,23 @@
         recurse: yes
       become: true
 
-    - name: set permissions on /export
-      file:
-        path: "{{ export_path }}"
-        state: directory
-        recurse: yes
-        owner: "{{ anongid }}"
-        group: "{{ anongid }}"
-        mode: 0755
-      become: true
-
-    - name: bind mount ZFS on to /export
+    - name: bind mount ZFS on to exported path
       mount:
         name: "{{ export_path}}"
         src: "/{{zfs_dataset}}"
         fstype: none
         opts: rw,bind
         state: mounted
+      become: true
+
+    - name: set permissions on exported path
+      file:
+        path: "{{ export_path }}"
+        state: directory
+        recurse: no
+        owner: "{{ anongid }}"
+        group: "{{ anongid }}"
+        mode: 0755
       become: true
 
     - name: export filesystem
