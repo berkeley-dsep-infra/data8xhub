@@ -7,6 +7,7 @@ resources:
     cluster:
       name: {{ deployment }}-cluster-{{ cluster.name }}
       network: default
+      initialClusterVersion: 1.8.2-gke.0
       addonsConfig:
         httpLoadBalancing:
           disabled: true
