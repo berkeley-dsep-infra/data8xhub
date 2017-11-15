@@ -16,13 +16,15 @@
       become: true
 
     - name: check if pool has been created
-      shell: sudo zpool status pool0
+      shell: zpool status pool0
       register: pool0_exists
       ignore_errors: True
+      become: true
 
     - name: create pool0
-      shell: sudo zpool create -f pool0 /dev/sdb
+      shell: zpool create -f pool0 /dev/sdb
       when: pool0_exists|failed
+      become: true
 
     - name: install nfs server packages
       apt:
