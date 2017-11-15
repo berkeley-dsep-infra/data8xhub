@@ -5,6 +5,7 @@ Every function must be idempotent, calling multiple times should work A-OK
 """
 import glob
 import os
+import time
 import click
 import logging
 import tempfile
@@ -31,7 +32,15 @@ def get_data(deployment):
 
 def gcloud(*args):
     logging.info("Executing gcloud", ' '.join(args))
-    return subprocess.check_call(['gcloud'] + list(args))
+    return subprocess.check_call(['gcloud', '--quiet'] + list(args))
+
+def helm(*args, **kwargs):
+    logging.info("Executing helm", ' '.join(args))
+    return subprocess.check_call(['helm'] + list(args), **kwargs)
+
+def kubectl(*args, **kwargs):
+    logging.info("Executing kubectl", ' '.join(args))
+    return subprocess.check_call(['kubectl'] + list(args), **kwargs)
 
 def use_cluster(deployment, cluster, zone):
     cluster_name = '{}-cluster-{}'.format(deployment, cluster)
@@ -83,40 +92,72 @@ def cluster_up(deployment):
         # Initialize Helm!
         subprocess.run(['helm', 'init', '--service-account', 'tiller', '--upgrade'], check=True)
         # wait for tiller to be up
-        subprocess.run(['kubectl', 'rollout', 'status', '--watch', 'deployment/tiller-deploy', '--namespace=kube-system'], check=True)
+        kubectl('rollout', 'status', '--watch', 'deployment/tiller-deploy', '--namespace=kube-system')
 
         # Install cluster-wide charts
-        subprocess.run(['helm', 'dep', 'up'], cwd='cluster-support')
-        subprocess.run([
-            'helm', 'upgrade',
+        helm('dep', 'up', cwd='cluster-support')
+        helm(
+            'upgrade',
             '--install',
             '--wait',
             'cluster-support',
             '--namespace', 'cluster-support',
             'cluster-support'
-        ])
+        )
 
 @cli.command()
 @click.option('--deployment', default='hubs', help='Name of deployment to use')
 def deploy(deployment):
     data = get_data(deployment)
-    subprocess.run(['helm', 'repo', 'add', 'jupyterhub', 'https://jupyterhub.github.io/helm-chart'], check=True)
+    helm('repo', 'add', 'jupyterhub', 'https://jupyterhub.github.io/helm-chart')
 
     for cluster in data['clusters']:
         use_cluster(deployment, cluster['name'], cluster['zone'])
 
-        subprocess.run(['helm', 'dep', 'up'], cwd='hub')
+        helm('dep', 'up', cwd='hub')
 
         for hub in cluster['hubs']:
             hub_name = 'hub-{}'.format(hub['name'])
-            subprocess.run([
-                'helm', 'upgrade',
+            helm(
+                'upgrade',
                 '--install',
                 '--wait',
                 hub_name,
                 '--namespace', hub_name,
                 'hub'
-            ])
+            )
+
+@cli.command()
+@click.option('--deployment', default='hubs', help='Name of deployment to use')
+def teardown(deployment):
+    data = get_data(deployment)
+
+    for cluster in data['clusters']:
+        use_cluster(deployment, cluster['name'], cluster['zone'])
+
+        for hub in cluster['hubs']:
+            hub_name = 'hub-{}'.format(hub['name'])
+            try:
+                helm('delete', '--purge', hub_name)
+            except subprocess.CalledProcessError:
+                print("Helm Release {} already deleted".format(hub_name))
+            try:
+                kubectl('delete', 'namespace', hub_name)
+            except subprocess.CalledProcessError:
+                print("Namespace {} already deleted".format(hub_name))
+            for i in range(16):
+                try:
+                    kubectl('get', 'namespace', hub_name)
+                    print("Waiting for namespace {} to delete...".format(hub_name))
+                    time.sleep(2**i)
+                except subprocess.CalledProcessError:
+                    # Successfully deleted!
+                    break
+
+
+
+    gcloud('deployment-manager', 'deployments', 'delete', deployment)
+
 
 if __name__ == '__main__':
     cli()
