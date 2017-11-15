@@ -65,7 +65,7 @@
 
     - name: set permissions on /export
       file:
-        path: {{ export_path }}
+        path: "{{ export_path }}"
         state: directory
         recurse: yes
         owner: "{{ anongid }}"
@@ -75,8 +75,8 @@
 
     - name: bind mount ZFS on to /export
       mount:
-        name: {{ export_path}}
-        src: /{{zfs_dataset}}
+        name: "{{ export_path}}"
+        src: "/{{zfs_dataset}}"
         fstype: none
         opts: rw,bind
         state: mounted
