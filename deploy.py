@@ -33,6 +33,10 @@ def gcloud(*args):
     logging.info("Executing gcloud", ' '.join(args))
     return subprocess.check_call(['gcloud'] + list(args))
 
+def use_cluster(deployment, cluster, zone):
+    cluster_name = '{}-cluster-{}'.format(deployment, cluster)
+    gcloud('container', 'clusters', 'get-credentials', cluster_name, '--zone', zone)
+
 @click.group()
 def cli():
     pass
@@ -70,9 +74,7 @@ def cluster_up(deployment):
     data = get_data(deployment)
 
     for cluster in data['clusters']:
-        # Get credentials
-        cluster_name = '{}-cluster-{}'.format(deployment, cluster['name'])
-        gcloud('container', 'clusters', 'get-credentials', cluster_name, '--zone', cluster['zone'])
+        use_cluster(deployment, cluster['name'], cluster['zone'])
 
         # Get Helm RBAC set up!
         helm_rbac = render_template('helm-rbac.yaml', data)
@@ -93,6 +95,28 @@ def cluster_up(deployment):
             '--namespace', 'cluster-support',
             'cluster-support'
         ])
+
+@cli.command()
+@click.option('--deployment', default='hubs', help='Name of deployment to use')
+def deploy(deployment):
+    data = get_data(deployment)
+    subprocess.run(['helm', 'repo', 'add', 'jupyterhub', 'https://jupyterhub.github.io/helm-chart'], check=True)
+
+    for cluster in data['clusters']:
+        use_cluster(deployment, cluster['name'], cluster['zone'])
+
+        subprocess.run(['helm', 'dep', 'up'], cwd='hub')
+
+        for hub in cluster['hubs']:
+            hub_name = 'hub-{}'.format(hub['name'])
+            subprocess.run([
+                'helm', 'upgrade',
+                '--install',
+                '--wait',
+                hub_name,
+                '--namespace', hub_name,
+                'hub'
+            ])
 
 if __name__ == '__main__':
     cli()
