@@ -32,26 +32,25 @@ resources:
               - https://www.googleapis.com/auth/devstorage.read_only
               - https://www.googleapis.com/auth/logging.write
               - https://www.googleapis.com/auth/monitoring
-{%- for hub in cluster.hubs %}
+{%- endfor %}
+{%- for fileserver in fileservers %}
 - type: compute.v1.disk
-  name: {{ deployment }}-nfs-disk-{{ hub.name }}
+  name: {{ deployment }}-nfs-disk-{{ fileserver.name }}
   properties:
-    zone: {{ cluster.zone }}
-    sizeGb: {{ hub.nfs.dataDiskSizeGb }}
-    type: https://www.googleapis.com/compute/v1/projects/{{ project }}/zones/{{ cluster.zone }}/diskTypes/pd-ssd
+    zone: {{ fileserver.zone }}
+    sizeGb: {{ fileserver.dataDiskSizeGb }}
+    type: https://www.googleapis.com/compute/v1/projects/{{ project }}/zones/{{ fileserver.zone }}/diskTypes/pd-ssd
 - type: compute.v1.instance
-  name: {{ deployment }}-nfs-vm-{{ hub.name }}
+  name: {{ deployment }}-nfs-vm-{{ fileserver.name }}
   properties:
-    zone: {{ cluster.zone }}
-    machineType: https://www.googleapis.com/compute/v1/projects/{{ project }}/zones/{{ cluster.zone }}/machineTypes/{{ hub.nfs.machineType }}
+    zone: {{ fileserver.zone }}
+    machineType: https://www.googleapis.com/compute/v1/projects/{{ project }}/zones/{{ fileserver.zone }}/machineTypes/{{ fileserver.machineType }}
     metadata:
       items:
        - key: deployment
          value: {{ deployment }}
-       - key: cluster
-         value: {{ cluster.name }}
-       - key: hub
-         value: {{ hub.name }}
+       - key: name
+         value: "{{ fileserver.name }}"
        - key: startup-script
          value: |
            #!/bin/bash
@@ -65,11 +64,11 @@ resources:
       boot: true
       autoDelete: true
       initializeParams:
-        diskName: boot-nfs-{{ deployment }}-{{ hub.name }}
+        diskName: boot-nfs-{{ deployment }}-{{ fileserver.name }}
         sourceImage: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/family/ubuntu-1710
-    - deviceName: nfs-disk-{{ hub.name }}
+    - deviceName: nfs-disk-{{ fileserver.name }}
       type: PERSISTENT
-      source: $(ref.{{ deployment }}-nfs-disk-{{ hub.name }}.selfLink)
+      source: $(ref.{{ deployment }}-nfs-disk-{{ fileserver.name }}.selfLink)
       autoDelete: false
     networkInterfaces:
     - network: https://www.googleapis.com/compute/v1/projects/{{ project }}/global/networks/default
@@ -77,5 +76,4 @@ resources:
       accessConfigs:
       - name: External NAT
         type: ONE_TO_ONE_NAT
-{% endfor %}
 {% endfor %}
