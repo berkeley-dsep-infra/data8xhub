@@ -1,3 +1,8 @@
+"""
+Deploy script for entire MOOC's JupyterHub
+
+Every function must be idempotent, calling multiple times should work A-OK
+"""
 import glob
 import os
 import click
@@ -28,7 +33,11 @@ def gcloud(*args):
     logging.info("Executing gcloud", ' '.join(args))
     return subprocess.check_call(['gcloud'] + list(args))
 
-@click.command()
+@click.group()
+def cli():
+    pass
+
+@cli.command()
 @click.option('--deployment', default='hubs', help='Name of deployment to use')
 @click.option('--create', default=False, help='Create deployment rather than update it', is_flag=True)
 @click.option('--dry-run', default=False, help='Do not actually run commands, just do a dry run', is_flag=True)
@@ -55,5 +64,35 @@ def gdm(deployment, create, dry_run, debug):
         gcloud(*args)
 
 
+@cli.command()
+@click.option('--deployment', default='hubs', help='Name of deployment to use')
+def cluster_up(deployment):
+    data = get_data(deployment)
+
+    for cluster in data['clusters']:
+        # Get credentials
+        cluster_name = '{}-cluster-{}'.format(deployment, cluster['name'])
+        gcloud('container', 'clusters', 'get-credentials', cluster_name, '--zone', cluster['zone'])
+
+        # Get Helm RBAC set up!
+        helm_rbac = render_template('helm-rbac.yaml', data)
+        subprocess.run(['kubectl', 'apply', '-f', '-'], input=helm_rbac.encode(), check=True)
+
+        # Initialize Helm!
+        subprocess.run(['helm', 'init', '--service-account', 'tiller', '--upgrade'], check=True)
+        # wait for tiller to be up
+        subprocess.run(['kubectl', 'rollout', 'status', '--watch', 'deployment/tiller-deploy', '--namespace=kube-system'], check=True)
+
+        # Install cluster-wide charts
+        subprocess.run(['helm', 'dep', 'up'], cwd='cluster-support')
+        subprocess.run([
+            'helm', 'upgrade',
+            '--install',
+            '--wait',
+            'cluster-support',
+            '--namespace', 'cluster-support',
+            'cluster-support'
+        ])
+
 if __name__ == '__main__':
-    gdm()
+    cli()

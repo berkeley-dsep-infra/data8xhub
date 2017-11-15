@@ -10,3 +10,5 @@ clusters:
         dataDiskSizeGb: 4000
 
 project: data8x-scratch
+admins:
+  - YuviPanda@gmail.com
