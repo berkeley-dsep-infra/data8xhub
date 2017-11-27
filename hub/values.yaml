@@ -1,3 +1,6 @@
+
 jupyterhub:
+  rbac:
+    enabled: true
   proxy:
     secretToken: f2f09a48d8dfaa1ce0d06d99d21af88281bcf109a442a572e748a4937fd3b2d1
