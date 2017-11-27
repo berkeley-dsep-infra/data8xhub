@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Deploy script for entire MOOC's JupyterHub
 
