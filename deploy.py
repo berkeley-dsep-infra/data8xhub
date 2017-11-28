@@ -93,7 +93,7 @@ def gdm(deployment, create, dry_run, debug):
 def cluster_up(deployment):
     data = get_data(deployment)
 
-    for cluster in data['clusters']:
+    for cluster in data['config']['clusters']:
         use_cluster(deployment, cluster['name'], cluster['zone'])
 
         # Get Helm RBAC set up!
