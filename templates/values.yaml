@@ -1,5 +1,8 @@
-
 jupyterhub:
+  hub:
+    extraConfig: |
+      {{ files['sharder.py']|indent(6) }}
+
   rbac:
     enabled: true
   proxy:

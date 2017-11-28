@@ -11,6 +11,7 @@ import click
 import logging
 import tempfile
 import subprocess
+import glob
 from jinja2 import Environment, FileSystemLoader
 from ruamel.yaml import YAML
 
@@ -28,6 +29,13 @@ def render_template(name, data):
 def get_data(deployment):
     with open('config.yaml') as f:
         data = yaml.load(f)
+    files = {}
+    for filename in glob.glob('files/*'):
+        if not os.path.basename(filename).startswith('.'):
+            with open(filename) as f:
+                files[os.path.basename(filename)] = f.read()
+
+    data['files'] = files
     data['deployment'] = deployment
     return data
 
@@ -119,14 +127,20 @@ def deploy(deployment):
 
         for hub in cluster['hubs']:
             hub_name = 'hub-{}'.format(hub['name'])
-            helm(
-                'upgrade',
-                '--install',
-                '--wait',
-                hub_name,
-                '--namespace', hub_name,
-                'hub'
-            )
+            with tempfile.NamedTemporaryFile() as out:
+                values = render_template('values.yaml', get_data(deployment))
+                out.write(values.encode())
+                out.flush()
+
+                helm(
+                    'upgrade',
+                    '--install',
+                    '--wait',
+                    hub_name,
+                    '--namespace', hub_name,
+                    'hub',
+                    '-f', out.name
+                )
 
 @cli.command()
 @click.option('--deployment', default='hubs', help='Name of deployment to use')
