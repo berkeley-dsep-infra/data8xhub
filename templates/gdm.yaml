@@ -1,5 +1,5 @@
 resources:
-{%- for cluster in clusters %}
+{%- for cluster in config.clusters %}
 - type: container.v1.cluster
   name: {{ deployment }}-cluster-{{ cluster.name }}
   properties:
@@ -33,18 +33,18 @@ resources:
               - https://www.googleapis.com/auth/logging.write
               - https://www.googleapis.com/auth/monitoring
 {%- endfor %}
-{%- for fileserver in fileservers %}
+{%- for fileserver in config.fileservers %}
 - type: compute.v1.disk
   name: {{ deployment }}-nfs-disk-{{ fileserver.name }}
   properties:
     zone: {{ fileserver.zone }}
     sizeGb: {{ fileserver.dataDiskSizeGb }}
-    type: https://www.googleapis.com/compute/v1/projects/{{ project }}/zones/{{ fileserver.zone }}/diskTypes/pd-ssd
+    type: https://www.googleapis.com/compute/v1/projects/{{ config.project }}/zones/{{ fileserver.zone }}/diskTypes/pd-ssd
 - type: compute.v1.instance
   name: {{ deployment }}-nfs-vm-{{ fileserver.name }}
   properties:
     zone: {{ fileserver.zone }}
-    machineType: https://www.googleapis.com/compute/v1/projects/{{ project }}/zones/{{ fileserver.zone }}/machineTypes/{{ fileserver.machineType }}
+    machineType: https://www.googleapis.com/compute/v1/projects/{{ config.project }}/zones/{{ fileserver.zone }}/machineTypes/{{ fileserver.machineType }}
     metadata:
       items:
        - key: deployment
@@ -71,7 +71,7 @@ resources:
       source: $(ref.{{ deployment }}-nfs-disk-{{ fileserver.name }}.selfLink)
       autoDelete: false
     networkInterfaces:
-    - network: https://www.googleapis.com/compute/v1/projects/{{ project }}/global/networks/default
+    - network: https://www.googleapis.com/compute/v1/projects/{{ config.project }}/global/networks/default
       # Access Config required to give the instance a public IP address
       accessConfigs:
       - name: External NAT

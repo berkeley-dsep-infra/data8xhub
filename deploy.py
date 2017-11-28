@@ -28,16 +28,18 @@ def render_template(name, data):
 
 def get_data(deployment):
     with open('config.yaml') as f:
-        data = yaml.load(f)
+        config = yaml.load(f)
     files = {}
     for filename in glob.glob('files/*'):
         if not os.path.basename(filename).startswith('.'):
             with open(filename) as f:
                 files[os.path.basename(filename)] = f.read()
 
-    data['files'] = files
-    data['deployment'] = deployment
-    return data
+    return {
+        'config': config,
+        'files': files,
+        'deployment': deployment
+    }
 
 def gcloud(*args):
     logging.info("Executing gcloud", ' '.join(args))
@@ -120,7 +122,7 @@ def deploy(deployment):
     data = get_data(deployment)
     helm('repo', 'add', 'jupyterhub', 'https://jupyterhub.github.io/helm-chart')
 
-    for cluster in data['clusters']:
+    for cluster in data['config']['clusters']:
         use_cluster(deployment, cluster['name'], cluster['zone'])
 
         helm('dep', 'up', cwd='hub')
@@ -147,7 +149,7 @@ def deploy(deployment):
 def teardown(deployment):
     data = get_data(deployment)
 
-    for cluster in data['clusters']:
+    for cluster in data['config']['clusters']:
         use_cluster(deployment, cluster['name'], cluster['zone'])
 
         for hub in cluster['hubs']:
