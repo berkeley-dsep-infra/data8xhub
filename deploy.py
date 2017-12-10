@@ -11,6 +11,7 @@ import click
 import logging
 import tempfile
 import subprocess
+import json
 import glob
 from jinja2 import Environment, FileSystemLoader
 from ruamel.yaml import YAML
@@ -22,6 +23,7 @@ def render_template(name, data):
     template_env = Environment(
         loader=FileSystemLoader('templates')
     )
+    template_env.filters['jsonify'] = json.dumps
 
     return template_env.get_template(name).render(data)
 

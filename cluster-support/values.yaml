@@ -1,7 +1,7 @@
 nfsFlexVolume:
   image:
     repository: yuvipanda/nfs-flex-volume
-    tag: v0.3
-    pullPolicy: IfNotPresent
+    tag: v0.4
+    pullPolicy: Always
   flexVolume:
     pluginDir: /home/kubernetes/flexvolume

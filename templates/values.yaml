@@ -3,6 +3,14 @@ jupyterhub:
     extraConfig: |
       {{ files['sharder.py']|indent(6) }}
 
+      {{ files['sharding-config.py']|indent(6) }}
+    extraConfigMap:
+      deployment: {{ deployment|safe }}
+      full-config: {{ config|jsonify|safe }}
+
+  singleuser:
+    storage:
+      type: custom
   rbac:
     enabled: true
   proxy:
