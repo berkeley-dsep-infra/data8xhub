@@ -1,6 +1,6 @@
 clusters:
   - name: alpha
-    machineType: n1-standard-2
+    machineType: n1-highmem-2
     bootDiskSizeGb: 100
     zone: us-central1-a
     hubs:
@@ -8,12 +8,8 @@ clusters:
 
 fileservers:
   - name: 1
-    machineType: n1-highcpu-32
-    dataDiskSizeGb: 4000
-    zone: us-central1-a
-  - name: 2
-    machineType: n1-highcpu-32
-    dataDiskSizeGb: 4000
+    machineType: n1-highcpu-8
+    dataDiskSizeGb: 1000
     zone: us-central1-a
 
 project: data8x-scratch

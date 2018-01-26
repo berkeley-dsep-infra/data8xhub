@@ -7,19 +7,19 @@ resources:
     cluster:
       name: {{ deployment }}-cluster-{{ cluster.name }}
       network: default
-      initialClusterVersion: 1.8.4-gke.1
+      initialClusterVersion: 1.8.6-gke.0
       addonsConfig:
         httpLoadBalancing:
           disabled: true
       legacyAbac:
         enabled: false
       nodePools:
-        - initialNodeCount: 1
+        - initialNodeCount: 2
           name: default
           autoscaling:
             enabled: true
-            minNodeCount: 1
-            maxNodeCount: 50
+            minNodeCount: 2
+            maxNodeCount: 100
           config:
             machineType: {{ cluster.machineType }}
             diskSizeGb: {{ cluster.bootDiskSizeGb }}
