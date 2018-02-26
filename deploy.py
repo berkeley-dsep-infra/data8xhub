@@ -7,7 +7,7 @@ Every function must be idempotent, calling multiple times should work A-OK
 import glob
 import os
 import time
-import click
+import argparse
 import logging
 import tempfile
 import subprocess
@@ -59,15 +59,7 @@ def use_cluster(deployment, cluster, zone):
     cluster_name = '{}-cluster-{}'.format(deployment, cluster)
     gcloud('container', 'clusters', 'get-credentials', cluster_name, '--zone', zone)
 
-@click.group()
-def cli():
-    pass
 
-@cli.command()
-@click.option('--deployment', default='hubs', help='Name of deployment to use')
-@click.option('--create', default=False, help='Create deployment rather than update it', is_flag=True)
-@click.option('--dry-run', default=False, help='Do not actually run commands, just do a dry run', is_flag=True)
-@click.option('--debug', default=False, help='Print out debug info', is_flag=True)
 def gdm(deployment, create, dry_run, debug):
     data = get_data(deployment)
     gdm = render_template('gdm.yaml', data)
@@ -90,9 +82,7 @@ def gdm(deployment, create, dry_run, debug):
         gcloud(*args)
 
 
-@cli.command()
-@click.option('--deployment', default='hubs', help='Name of deployment to use')
-def cluster_up(deployment):
+def init_support(deployment, dry_run, debug):
     data = get_data(deployment)
 
     for cluster in data['config']['clusters']:
@@ -109,18 +99,21 @@ def cluster_up(deployment):
 
         # Install cluster-wide charts
         helm('dep', 'up', cwd='cluster-support')
-        helm(
+        install_cmd = [
             'upgrade',
             '--install',
             '--wait',
             'cluster-support',
             '--namespace', 'cluster-support',
             'cluster-support'
-        )
+        ]
+        if debug:
+            install_cmd.append('--debug')
+        if dry_run:
+            install_cmd.append('--dry-run')
+        helm(*install_cmd)
 
-@cli.command()
-@click.option('--deployment', default='hubs', help='Name of deployment to use')
-def deploy(deployment):
+def deploy(deployment, dry_run, debug):
     data = get_data(deployment)
     helm('repo', 'add', 'jupyterhub', 'https://jupyterhub.github.io/helm-chart')
 
@@ -136,18 +129,22 @@ def deploy(deployment):
                 out.write(values.encode())
                 out.flush()
 
-                helm(
+                install_cmd = [
                     'upgrade',
                     '--install',
                     '--wait',
+                    '--debug',
                     hub_name,
                     '--namespace', hub_name,
                     'hub',
                     '-f', out.name
-                )
+                ]
+                if dry_run:
+                    install_cmd.append('--dry-run')
+                if debug:
+                    install_cmd.append('--debug')
+                helm(*install_cmd)
 
-@cli.command()
-@click.option('--deployment', default='hubs', help='Name of deployment to use')
 def teardown(deployment):
     data = get_data(deployment)
 
@@ -178,5 +175,65 @@ def teardown(deployment):
     gcloud('deployment-manager', 'deployments', 'delete', deployment)
 
 
+def main():
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument(
+        '--deployment',
+        help='Name of deployment to run commands against'
+    )
+    argparser.add_argument(
+        '--debug',
+        action='store_true',
+        default=False,
+        help='Turn on debug level logging'
+    )
+
+    argparser.add_argument(
+        '--dry-run',
+        action='store_true',
+        default=False,
+        help='Do not execute action'
+    )
+
+    subparsers = argparser.add_subparsers(
+        help='Actions to perform',
+        dest='action'
+    )
+
+    gdm_parser = subparsers.add_parser(
+        'gdm',
+        help='Deploy GDM related changes'
+    )
+    gdm_parser.add_argument('--create', action='store_true', default=False)
+
+    subparsers.add_parser(
+        'init_support',
+        help='Set up support packages for the cluster'
+    )
+
+    subparsers.add_parser(
+        'deploy',
+        help='Deploy changes to the hub chart'
+    )
+
+    subparsers.add_parser(
+        'teardown',
+        help='Tear everything down!'
+    )
+
+    args = argparser.parse_args()
+
+    print(args)
+    if args.action == 'gdm':
+        gdm(args.deployment, args.create, args.dry_run, args.debug)
+    elif args.action == 'init_support':
+        init_support(args.deployment, args.dry_run, args.debug)
+    elif args.action == 'deploy':
+        deploy(args.deployment, args.dry_run, args.debug)
+    elif args.action == 'teardown':
+        teardown(args.deployment)
+
+
+
 if __name__ == '__main__':
-    cli()
+    main()
