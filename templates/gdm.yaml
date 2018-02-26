@@ -1,11 +1,11 @@
 resources:
-{%- for cluster in config.clusters %}
+{%- for name, cluster in config.clusters.items() %}
 - type: container.v1.cluster
-  name: {{ deployment }}-cluster-{{ cluster.name }}
+  name: {{ deployment }}-cluster-{{ name }}
   properties:
     zone: {{ cluster.zone }}
     cluster:
-      name: {{ deployment }}-cluster-{{ cluster.name }}
+      name: {{ deployment }}-cluster-{{ name }}
       network: default
       initialClusterVersion:  1.9.2-gke.1
       addonsConfig:
@@ -26,22 +26,22 @@ resources:
             imageType: ubuntu
             metadata:
               deployment: {{ deployment }}
-              cluster: {{ cluster.name }}
+              cluster: {{ name }}
             oauthScopes:
               - https://www.googleapis.com/auth/compute
               - https://www.googleapis.com/auth/devstorage.read_only
               - https://www.googleapis.com/auth/logging.write
               - https://www.googleapis.com/auth/monitoring
 {%- endfor %}
-{%- for fileserver in config.fileservers %}
+{%- for name, fileserver in config.fileservers.items() %}
 - type: compute.v1.disk
-  name: {{ deployment }}-nfs-disk-{{ fileserver.name }}
+  name: {{ deployment }}-nfs-disk-{{ name }}
   properties:
     zone: {{ fileserver.zone }}
     sizeGb: {{ fileserver.dataDiskSizeGb }}
     type: https://www.googleapis.com/compute/v1/projects/{{ config.project }}/zones/{{ fileserver.zone }}/diskTypes/pd-ssd
 - type: compute.v1.instance
-  name: {{ deployment }}-nfs-vm-{{ fileserver.name }}
+  name: {{ deployment }}-nfs-vm-{{ name }}
   properties:
     zone: {{ fileserver.zone }}
     machineType: https://www.googleapis.com/compute/v1/projects/{{ config.project }}/zones/{{ fileserver.zone }}/machineTypes/{{ fileserver.machineType }}
@@ -50,7 +50,7 @@ resources:
        - key: deployment
          value: {{ deployment }}
        - key: name
-         value: "{{ fileserver.name }}"
+         value: "{{ name }}"
        - key: startup-script
          value: |
            #!/bin/bash
@@ -64,11 +64,11 @@ resources:
       boot: true
       autoDelete: true
       initializeParams:
-        diskName: boot-nfs-{{ deployment }}-{{ fileserver.name }}
+        diskName: boot-nfs-{{ deployment }}-{{ name }}
         sourceImage: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/family/ubuntu-1710
-    - deviceName: nfs-disk-{{ fileserver.name }}
+    - deviceName: nfs-disk-{{ name }}
       type: PERSISTENT
-      source: $(ref.{{ deployment }}-nfs-disk-{{ fileserver.name }}.selfLink)
+      source: $(ref.{{ deployment }}-nfs-disk-{{ name }}.selfLink)
       autoDelete: false
     networkInterfaces:
     - network: https://www.googleapis.com/compute/v1/projects/{{ config.project }}/global/networks/default

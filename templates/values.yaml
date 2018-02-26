@@ -19,11 +19,4 @@ jupyterhub:
       type: custom
 
   proxy:
-    service:
-      loadBalancerIP: 104.197.5.28
-    secretToken: f2f09a48d8dfaa1ce0d06d99d21af88281bcf109a442a572e748a4937fd3b2d1
-    https:
-      letsencrypt:
-        contactEmail: yuvipanda@berkeley.edu
-      hosts:
-        - hub.data8x.berkeley.edu
+    secretToken: {{ hub.proxySecret }}

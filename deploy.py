@@ -85,8 +85,8 @@ def gdm(deployment, create, dry_run, debug):
 def init_support(deployment, dry_run, debug):
     data = get_data(deployment)
 
-    for cluster in data['config']['clusters']:
-        use_cluster(deployment, cluster['name'], cluster['zone'])
+    for name, cluster in data['config']['clusters'].items():
+        use_cluster(deployment, name, cluster['zone'])
 
         # Get Helm RBAC set up!
         helm_rbac = render_template('helm-rbac.yaml', data)
@@ -117,15 +117,19 @@ def deploy(deployment, dry_run, debug):
     data = get_data(deployment)
     helm('repo', 'add', 'jupyterhub', 'https://jupyterhub.github.io/helm-chart')
 
-    for cluster in data['config']['clusters']:
-        use_cluster(deployment, cluster['name'], cluster['zone'])
+    for name, cluster in data['config']['clusters'].items():
+        use_cluster(deployment, name, cluster['zone'])
 
         helm('dep', 'up', cwd='hub')
 
-        for hub in cluster['hubs']:
-            hub_name = 'hub-{}'.format(hub['name'])
+        for name, hub in cluster['hubs'].items():
+            hub_name = 'hub-' + name
             with tempfile.NamedTemporaryFile() as out:
-                values = render_template('values.yaml', get_data(deployment))
+                template_data = get_data(deployment)
+                template_data['hub'] = hub
+                template_data['name'] = name
+
+                values = render_template('values.yaml', template_data)
                 out.write(values.encode())
                 out.flush()
 

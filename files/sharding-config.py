@@ -26,8 +26,8 @@ def setup_homedir_sharding():
     deployment = get_config('custom.deployment')
     nfs_server_template = '{deployment}-nfs-vm-{name}'
     fileservers = [
-        nfs_server_template.format(deployment=deployment, name=fs['name'])
-        for fs in config['fileservers']
+        nfs_server_template.format(deployment=deployment, name=name)
+        for name in config['fileservers']
     ]
     sharder = Sharder(engine, 'homedir', fileservers)
 

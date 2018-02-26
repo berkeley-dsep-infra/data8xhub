@@ -1,14 +1,16 @@
 clusters:
-  - name: alpha
+  alpha:
     machineType: n1-highmem-2
     bootDiskSizeGb: 100
     initialNodeCount: 2
     zone: us-central1-a
     hubs:
-    - name: a
+      a:
+        proxySecret: 87baab08c234a5c22422850341fad3672249c135d2426b69feea04a004eccde6
+
 
 fileservers:
-  - name: 1
+  "1":
     machineType: n1-highcpu-8
     dataDiskSizeGb: 1000
     zone: us-central1-a
