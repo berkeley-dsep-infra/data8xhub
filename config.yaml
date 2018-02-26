@@ -1,5 +1,5 @@
 clusters:
-  alpha:
+  cluster-alpha:
     machineType: n1-highmem-2
     bootDiskSizeGb: 100
     initialNodeCount: 2
@@ -9,7 +9,7 @@ clusters:
 
 
 fileservers:
-  "1":
+  fileserver-01:
     machineType: n1-highcpu-8
     dataDiskSizeGb: 1000
     zone: us-central1-a

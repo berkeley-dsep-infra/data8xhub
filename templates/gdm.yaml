@@ -1,11 +1,11 @@
 resources:
 {%- for name, cluster in config.clusters.items() %}
 - type: container.v1.cluster
-  name: {{ deployment }}-cluster-{{ name }}
+  name: {{ deployment }}-{{ name }}
   properties:
     zone: {{ cluster.zone }}
     cluster:
-      name: {{ deployment }}-cluster-{{ name }}
+      name: {{ deployment }}-{{ name }}
       network: default
       initialClusterVersion:  1.9.2-gke.1
       addonsConfig:
@@ -35,13 +35,13 @@ resources:
 {%- endfor %}
 {%- for name, fileserver in config.fileservers.items() %}
 - type: compute.v1.disk
-  name: {{ deployment }}-nfs-disk-{{ name }}
+  name: {{ deployment }}-{{ name }}-data-disk
   properties:
     zone: {{ fileserver.zone }}
     sizeGb: {{ fileserver.dataDiskSizeGb }}
     type: https://www.googleapis.com/compute/v1/projects/{{ config.project }}/zones/{{ fileserver.zone }}/diskTypes/pd-ssd
 - type: compute.v1.instance
-  name: {{ deployment }}-nfs-vm-{{ name }}
+  name: {{ deployment }}-{{ name }}
   properties:
     zone: {{ fileserver.zone }}
     machineType: https://www.googleapis.com/compute/v1/projects/{{ config.project }}/zones/{{ fileserver.zone }}/machineTypes/{{ fileserver.machineType }}
@@ -64,11 +64,11 @@ resources:
       boot: true
       autoDelete: true
       initializeParams:
-        diskName: boot-nfs-{{ deployment }}-{{ name }}
+        diskName: {{ deployment }}-{{ name }}-boot-disk
         sourceImage: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/family/ubuntu-1710
-    - deviceName: nfs-disk-{{ name }}
+    - deviceName: {{ deployment }}-{{ name }}-data-disk
       type: PERSISTENT
-      source: $(ref.{{ deployment }}-nfs-disk-{{ name }}.selfLink)
+      source: $(ref.{{ deployment }}-{{ name }}-data-disk.selfLink)
       autoDelete: false
     networkInterfaces:
     - network: https://www.googleapis.com/compute/v1/projects/{{ config.project }}/global/networks/default

@@ -56,7 +56,7 @@ def kubectl(*args, **kwargs):
     return subprocess.check_call(['kubectl'] + list(args), **kwargs)
 
 def use_cluster(deployment, cluster, zone):
-    cluster_name = '{}-cluster-{}'.format(deployment, cluster)
+    cluster_name = '{}-{}'.format(deployment, cluster)
     gcloud('container', 'clusters', 'get-credentials', cluster_name, '--zone', zone)
 
 
@@ -158,8 +158,8 @@ def deploy(deployment, dry_run, debug):
 def teardown(deployment):
     data = get_data(deployment)
 
-    for cluster in data['config']['clusters']:
-        use_cluster(deployment, cluster['name'], cluster['zone'])
+    for cluster_name, cluster in data['config']['clusters'].items():
+        use_cluster(deployment, cluster_name, cluster['zone'])
 
         for name in cluster['hubs']:
             try:

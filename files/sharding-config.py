@@ -24,7 +24,7 @@ def setup_homedir_sharding():
 
     config = get_config('custom.full-config')
     deployment = get_config('custom.deployment')
-    nfs_server_template = '{deployment}-nfs-vm-{name}'
+    nfs_server_template = '{deployment}-{name}'
     fileservers = [
         nfs_server_template.format(deployment=deployment, name=name)
         for name in config['fileservers']
