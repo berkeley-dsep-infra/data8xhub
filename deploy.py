@@ -124,14 +124,16 @@ def deploy(deployment, dry_run, debug):
 
         for name, hub in cluster['hubs'].items():
             hub_name = 'hub-' + name
-            with tempfile.NamedTemporaryFile() as out:
+            with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets:
                 template_data = get_data(deployment)
                 template_data['hub'] = hub
                 template_data['name'] = name
 
-                values = render_template('values.yaml', template_data)
-                out.write(values.encode())
-                out.flush()
+                values.write(render_template('values.yaml', template_data).encode())
+                values.flush()
+
+                secrets.write(render_template('secrets/common.yaml', template_data).encode())
+                secrets.flush()
 
                 install_cmd = [
                     'upgrade',
@@ -141,7 +143,8 @@ def deploy(deployment, dry_run, debug):
                     hub_name,
                     '--namespace', hub_name,
                     'hub',
-                    '-f', out.name
+                    '-f', values.name,
+                    '-f', secrets.name
                 ]
                 if dry_run:
                     install_cmd.append('--dry-run')
