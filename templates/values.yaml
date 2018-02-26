@@ -17,6 +17,3 @@ jupyterhub:
       tag: v2
     storage:
       type: custom
-
-  proxy:
-    secretToken: {{ hub.proxySecret }}

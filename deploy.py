@@ -123,8 +123,7 @@ def deploy(deployment, dry_run, debug):
         helm('dep', 'up', cwd='hub')
 
         for name, hub in cluster['hubs'].items():
-            hub_name = 'hub-' + name
-            with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets:
+            with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets, tempfile.NamedTemporaryFile() as hub_secrets:
                 template_data = get_data(deployment)
                 template_data['hub'] = hub
                 template_data['name'] = name
@@ -135,16 +134,20 @@ def deploy(deployment, dry_run, debug):
                 secrets.write(render_template('secrets/common.yaml', template_data).encode())
                 secrets.flush()
 
+                hub_secrets.write(render_template('secrets/{}.yaml'.format(name), template_data).encode())
+                hub_secrets.flush()
+
                 install_cmd = [
                     'upgrade',
                     '--install',
                     '--wait',
                     '--debug',
-                    hub_name,
-                    '--namespace', hub_name,
+                    name,
+                    '--namespace', name,
                     'hub',
                     '-f', values.name,
-                    '-f', secrets.name
+                    '-f', secrets.name,
+                    '-f', hub_secrets.name
                 ]
                 if dry_run:
                     install_cmd.append('--dry-run')
@@ -158,20 +161,19 @@ def teardown(deployment):
     for cluster in data['config']['clusters']:
         use_cluster(deployment, cluster['name'], cluster['zone'])
 
-        for hub in cluster['hubs']:
-            hub_name = 'hub-{}'.format(hub['name'])
+        for name in cluster['hubs']:
             try:
-                helm('delete', '--purge', hub_name)
+                helm('delete', '--purge', name)
             except subprocess.CalledProcessError:
-                print("Helm Release {} already deleted".format(hub_name))
+                print("Helm Release {} already deleted".format(name))
             try:
-                kubectl('delete', 'namespace', hub_name)
+                kubectl('delete', 'namespace', name)
             except subprocess.CalledProcessError:
-                print("Namespace {} already deleted".format(hub_name))
+                print("Namespace {} already deleted".format(name))
             for i in range(16):
                 try:
-                    kubectl('get', 'namespace', hub_name)
-                    print("Waiting for namespace {} to delete...".format(hub_name))
+                    kubectl('get', 'namespace', name)
+                    print("Waiting for namespace {} to delete...".format(name))
                     time.sleep(2**i)
                 except subprocess.CalledProcessError:
                     # Successfully deleted!

@@ -5,8 +5,7 @@ clusters:
     initialNodeCount: 2
     zone: us-central1-a
     hubs:
-      a:
-        proxySecret: 87baab08c234a5c22422850341fad3672249c135d2426b69feea04a004eccde6
+      hub-a: {}
 
 
 fileservers:
