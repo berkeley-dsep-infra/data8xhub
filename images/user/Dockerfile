@@ -33,7 +33,8 @@ RUN pip3 install --no-cache-dir \
          datascience \
          scipy \
          pandas \
-         matplotlib
+         matplotlib \
+         okpy
 
 WORKDIR /home/jovyan
 USER jovyan
