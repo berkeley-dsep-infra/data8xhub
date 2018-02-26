@@ -2,6 +2,7 @@ clusters:
   - name: alpha
     machineType: n1-highmem-2
     bootDiskSizeGb: 100
+    initialNodeCount: 2
     zone: us-central1-a
     hubs:
     - name: a

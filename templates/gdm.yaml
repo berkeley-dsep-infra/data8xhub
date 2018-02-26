@@ -14,7 +14,7 @@ resources:
       legacyAbac:
         enabled: false
       nodePools:
-        - initialNodeCount: 2
+        - initialNodeCount: {{ cluster.initialNodeCount }}
           name: default
           autoscaling:
             enabled: true
