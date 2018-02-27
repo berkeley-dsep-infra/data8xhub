@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reposync
+  labels:
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app: reposync
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+      app: reposync
+      heritage: {{ .Release.Service }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+        app: reposync
+        heritage: {{ .Release.Service }}
+        release: {{ .Release.Name }}
+    spec:
+      volumes:
+      - name: git
+        emptyDir: {}
+      containers:
+      - name: git
+        image: alpine:3.7
+        volumeMounts:
+        - name: git
+          mountPath: /srv
+          readOnly: true
+        ports:
+        - containerPort: 9418
+        args:
+        - /bin/sh
+        - -c
+        - apk add --no-cache git-daemon && git daemon --verbose --base-path=/srv --export-all --informative-errors --reuseaddr
+      - name: git-sync
+        image: k8s.gcr.io/git-sync:v2.0.6
+        volumeMounts:
+        - name: git
+          mountPath: /srv
+        args:
+         - -root=/srv
+         - -repo={{ .Values.reposync.repo }}

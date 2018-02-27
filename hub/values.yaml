@@ -1,0 +1,3 @@
+reposync:
+  enabled: true
+  repo: https://github.com/data-8/materials-x18
