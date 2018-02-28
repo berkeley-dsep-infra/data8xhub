@@ -161,6 +161,11 @@ def teardown(deployment):
     for cluster_name, cluster in data['config']['clusters'].items():
         use_cluster(deployment, cluster_name, cluster['zone'])
 
+        try:
+            helm('delete', '--purge', 'cluster-support')
+        except subprocess.CalledProcessError:
+            print("Helm Release cluster-support already deleted")
+
         for name in cluster['hubs']:
             try:
                 helm('delete', '--purge', name)
@@ -232,7 +237,6 @@ def main():
 
     args = argparser.parse_args()
 
-    print(args)
     if args.action == 'gdm':
         gdm(args.deployment, args.create, args.dry_run, args.debug)
     elif args.action == 'init_support':

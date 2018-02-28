@@ -5,3 +5,20 @@ nfsFlexVolume:
     pullPolicy: Always
   flexVolume:
     pluginDir: /home/kubernetes/flexvolume
+
+prometheus:
+  nodeExporter:
+    updateStrategy:
+      type: RollingUpdate
+  alertmanager:
+    enabled: false
+  pushgateway:
+    enabled: false
+  rbac:
+    create: true
+  server:
+    persistentVolume:
+      # Use a large SSD Volume to keep lots of data!
+      size: 2000Gi
+      storageClass: ssd
+    retention: 60d

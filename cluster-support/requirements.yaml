@@ -1,0 +1,5 @@
+dependencies:
+ - name: prometheus
+   # Pin to 5.2.x until https://github.com/kubernetes/charts/pull/3546#issuecomment-367542705 is sorted
+   version: 5.2.1
+   repository: https://kubernetes-charts.storage.googleapis.com
