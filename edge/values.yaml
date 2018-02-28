@@ -1,0 +1,3 @@
+proxy:
+  replicaCount: 1
+  resources: {}

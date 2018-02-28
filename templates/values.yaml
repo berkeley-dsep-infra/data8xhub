@@ -1,10 +1,14 @@
 jupyterhub:
   hub:
     concurrentSpawnLimit: 100
+    extraEnv:
+      HUB_NAME: {{ name }}
     extraConfig: |
       {{ files['sharder.py']|indent(6) }}
 
       {{ files['sharding-config.py']|indent(6) }}
+
+      {{ files['hub-marker.py']|indent(6) }}
 
     extraConfigMap:
       deployment: {{ deployment|safe }}

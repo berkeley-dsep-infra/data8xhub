@@ -1,0 +1,65 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: edge-proxy-config
+data:
+  default.conf: |
+    # Support websockets
+    map $http_upgrade $connection_upgrade {
+        default upgrade;
+        '' close;
+    }
+
+    # Cookie-based routing happens here.
+    # If a cookie named `hub` exists, it is used to pick which hub to
+    # send request to. If not, a hub is picked up at random.
+    # FIXME: This isn't secure, since we allow users to arbitrarily
+    # pick hubs here. Use a HMAC or something to secure this.
+    map $cookie_hub $picked_upstream {
+      default all-hubs;
+       ~^(?P<name>[\w-]+) hub-$name;
+    }
+
+    # Create an upstream per hub. This forces nginx to resolve them
+    # to IP addresses at startup. This is fine by us, since these
+    # are service IPs that do not change. We can avoid having to set
+    # a resolver directive manually this way!
+    {{ range $hub := .Values.hubs }}
+    upstream hub-{{ $hub }} {
+      server proxy-public.{{ $hub }}.svc.cluster.local;
+    }
+    {{ end }}
+
+    # Default upstream that contains all hubs
+    # Used when a request does not have a hub cookie set.
+    upstream all-hubs {
+      {{ range $hub := .Values.hubs }}
+      server proxy-public.{{ $hub }}.svc.cluster.local;
+      {{ end }}
+    }
+
+    server {
+      error_log stderr;
+      access_log /dev/stdout;
+
+      listen 80;
+
+      location / {
+        proxy_pass http://$picked_upstream$uri$is_args$args;
+
+        # This is required to support websockets
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade; 
+
+        # This is required for the target servers to know what
+        # exactly the original protocol / URI / Host was.
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Original-URI $request_uri;
+        # We explicitly use $http_host rather than $host because we want to
+        # preserve the Host headers coming in from the client. $host never
+        # includes ports, and causes notebooks to fail a cross origin check,
+        # since they check Host vs the Origin.
+        proxy_set_header Host $http_host;
+      }
+    }

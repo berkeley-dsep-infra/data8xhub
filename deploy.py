@@ -120,6 +120,7 @@ def deploy(deployment, dry_run, debug):
     for name, cluster in data['config']['clusters'].items():
         use_cluster(deployment, name, cluster['zone'])
 
+        # deploy the hubs
         helm('dep', 'up', cwd='hub')
 
         for name, hub in cluster['hubs'].items():
@@ -155,6 +156,38 @@ def deploy(deployment, dry_run, debug):
                     install_cmd.append('--debug')
                 helm(*install_cmd)
 
+        # Install our edge
+        helm('dep', 'up', cwd='edge')
+
+        with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets:
+            template_data = get_data(deployment)
+            template_data['cluster'] = cluster
+
+            values.write(render_template('edge.yaml', template_data).encode())
+            values.flush()
+
+            secrets.write(render_template('secrets/edge.yaml', template_data).encode())
+            secrets.flush()
+
+            install_cmd = [
+                'upgrade',
+                '--install',
+                '--wait',
+                '--debug',
+                'edge',
+                '--namespace', 'edge',
+                'edge',
+                '-f', values.name,
+                '-f', secrets.name,
+            ]
+            if dry_run:
+                install_cmd.append('--dry-run')
+            if debug:
+                install_cmd.append('--debug')
+            helm(*install_cmd)
+
+
+
 def teardown(deployment):
     data = get_data(deployment)
 
@@ -183,9 +216,6 @@ def teardown(deployment):
                 except subprocess.CalledProcessError:
                     # Successfully deleted!
                     break
-
-
-
     gcloud('deployment-manager', 'deployments', 'delete', deployment)
 
 

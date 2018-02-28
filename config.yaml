@@ -6,6 +6,7 @@ clusters:
     zone: us-central1-a
     hubs:
       hub-a: {}
+      hub-b: {}
 
 
 fileservers:
