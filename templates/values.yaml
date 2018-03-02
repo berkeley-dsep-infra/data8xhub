@@ -2,6 +2,10 @@ jupyterhub:
   proxy:
     service:
       type: ClusterIP
+  singleuser:
+    memory:
+      limit: 256M
+      guarantee: 256M
   hub:
     concurrentSpawnLimit: 100
     extraVolumes:
