@@ -18,7 +18,7 @@ resources:
           name: default
           autoscaling:
             enabled: true
-            minNodeCount: 2
+            minNodeCount: {{ cluster.initialNodeCount }}
             maxNodeCount: 100
           config:
             machineType: {{ cluster.machineType }}
