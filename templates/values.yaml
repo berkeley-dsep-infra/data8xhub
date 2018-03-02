@@ -6,6 +6,11 @@ jupyterhub:
     memory:
       limit: 256M
       guarantee: 256M
+  prePuller:
+    hook:
+      enabled: false
+    continuous:
+      enabled: true
   hub:
     concurrentSpawnLimit: 100
     extraVolumes:
