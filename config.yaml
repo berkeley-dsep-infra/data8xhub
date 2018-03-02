@@ -1,3 +1,5 @@
+region: us-central1
+
 clusters:
   cluster-alpha:
     machineType: n1-highmem-2

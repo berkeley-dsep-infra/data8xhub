@@ -77,3 +77,25 @@ resources:
       - name: External NAT
         type: ONE_TO_ONE_NAT
 {% endfor %}
+- type: sqladmin.v1beta4.instance
+  name: {{ deployment }}-db-instance
+  properties:
+    region: {{ config.region }}
+    databaseVersion: POSTGRES_9_6
+    backendType: SECOND_GEN
+    settings:
+      availabilityType: REGIONAL
+      tier: db-custom-1-4096
+- type: sqladmin.v1beta4.database
+  name: {{ deployment }}-nfs-sharder-db
+  properties:
+    instance: $(ref.{{ deployment }}-db-instance.name)
+    name: {{ deployment }}-nfs-sharder-db
+# FIXME: Provide more fine-grained permissions here?
+- type: sqladmin.v1beta4.user
+  name: {{ deployment }}-db-proxyuser
+  properties:
+    instance: $(ref.{{ deployment }}-db-instance.name)
+    name: {{ deployment }}-db-proxyuser
+    host: '%'
+    password: {{ config.sql.password }}

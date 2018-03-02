@@ -27,10 +27,37 @@ def render_template(name, data):
 
     return template_env.get_template(name).render(data)
 
+def merge_dictionaries(a, b, path=None, update=True):
+    """
+    Merge two dictionaries recursively.
+
+    From https://stackoverflow.com/a/25270947
+    """
+    if path is None:
+        path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                merge_dictionaries(a[key], b[key], path + [str(key)])
+            elif a[key] == b[key]:
+                pass # same leaf value
+            elif isinstance(a[key], list) and isinstance(b[key], list):
+                for idx, val in enumerate(b[key]):
+                    a[key][idx] = merge_dictionaries(a[key][idx],
+                                                     b[key][idx],
+                                                     path + [str(key), str(idx)],
+                                                     update=update)
+            elif update:
+                a[key] = b[key]
+            else:
+                raise Exception('Conflict at %s' % '.'.join(path + [str(key)]))
+        else:
+            a[key] = b[key]
+    return a
 
 def get_data(deployment):
-    with open('config.yaml') as f:
-        config = yaml.load(f)
+    with open('config.yaml') as c, open('secret.yaml') as s:
+        config = merge_dictionaries(yaml.load(c), yaml.load(s))
     files = {}
     for filename in glob.glob('files/*'):
         if not os.path.basename(filename).startswith('.'):
