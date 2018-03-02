@@ -1,4 +1,7 @@
 jupyterhub:
+  proxy:
+    service:
+      type: ClusterIP
   hub:
     concurrentSpawnLimit: 100
     extraVolumes:
