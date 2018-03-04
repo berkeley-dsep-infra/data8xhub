@@ -1,0 +1,20 @@
+[[source]]
+
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[packages]
+
+"ruamel.yaml" = "*"
+"jinja2" = "*"
+
+
+[dev-packages]
+
+
+
+[requires]
+
+python_version = "3.6"
