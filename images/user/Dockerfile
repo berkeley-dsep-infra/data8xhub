@@ -38,3 +38,6 @@ RUN pip3 install --no-cache-dir \
 
 WORKDIR /home/jovyan
 USER jovyan
+
+# Reset entrypoint, so we don't run under a shell that might swallow signals
+ENTRYPOINT []
