@@ -223,30 +223,24 @@ def teardown(deployment):
     data = get_data(deployment)
 
     for cluster_name, cluster in data['config']['clusters'].items():
-        use_cluster(deployment, cluster_name, cluster['zone'])
-
         try:
-            helm('delete', '--purge', 'cluster-support')
-        except subprocess.CalledProcessError:
-            print("Helm Release cluster-support already deleted")
+            use_cluster(deployment, cluster_name, cluster['zone'])
+        except:
+            continue
+
+        kubectl('--namespace', 'cluster-support', 'delete', 'deployment', '--all', '--now')
+        kubectl('--namespace', 'cluster-support', 'delete', 'pvc', '--all', '--now')
 
         for name in cluster['hubs']:
+            # Kill deployments so PVCs can be released, then kill PVCs too
             try:
-                helm('delete', '--purge', name)
+                kubectl('--namespace', name, 'delete', 'deployment', 'hub', '--now')
             except subprocess.CalledProcessError:
-                print("Helm Release {} already deleted".format(name))
+                pass
             try:
-                kubectl('delete', 'namespace', name)
+                kubectl('--namespace', name, 'delete', 'pvc', '--all', '--now')
             except subprocess.CalledProcessError:
-                print("Namespace {} already deleted".format(name))
-            for i in range(16):
-                try:
-                    kubectl('get', 'namespace', name)
-                    print("Waiting for namespace {} to delete...".format(name))
-                    time.sleep(2**i)
-                except subprocess.CalledProcessError:
-                    # Successfully deleted!
-                    break
+                pass
     gcloud('deployment-manager', 'deployments', 'delete', deployment)
 
 
