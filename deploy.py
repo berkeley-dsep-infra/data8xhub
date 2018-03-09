@@ -15,7 +15,8 @@ import json
 import glob
 from jinja2 import Environment, FileSystemLoader
 from ruamel.yaml import YAML
-
+from multiprocessing import Pool
+from functools import partial
 
 yaml = YAML()
 
@@ -140,6 +141,39 @@ def init_support(deployment, dry_run, debug):
             install_cmd.append('--dry-run')
         helm(*install_cmd)
 
+def deploy_hub(deployment, dry_run, debug, name, hub):
+    with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets, tempfile.NamedTemporaryFile() as hub_secrets:
+        template_data = get_data(deployment)
+        template_data['hub'] = hub
+        template_data['name'] = name
+
+        values.write(render_template('values.yaml', template_data).encode())
+        values.flush()
+
+        secrets.write(render_template('secrets/common.yaml', template_data).encode())
+        secrets.flush()
+
+        hub_secrets.write(render_template('secrets/{}.yaml'.format(name), template_data).encode())
+        hub_secrets.flush()
+
+        install_cmd = [
+            'upgrade',
+            '--install',
+            '--wait',
+            '--debug',
+            name,
+            '--namespace', name,
+            'hub',
+            '-f', values.name,
+            '-f', secrets.name,
+            '-f', hub_secrets.name
+        ]
+        if dry_run:
+            install_cmd.append('--dry-run')
+        if debug:
+            install_cmd.append('--debug')
+        helm(*install_cmd)
+
 def deploy(deployment, dry_run, debug):
     data = get_data(deployment)
     helm('repo', 'add', 'jupyterhub', 'https://jupyterhub.github.io/helm-chart')
@@ -150,38 +184,8 @@ def deploy(deployment, dry_run, debug):
         # deploy the hubs
         helm('dep', 'up', cwd='hub')
 
-        for name, hub in cluster['hubs'].items():
-            with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets, tempfile.NamedTemporaryFile() as hub_secrets:
-                template_data = get_data(deployment)
-                template_data['hub'] = hub
-                template_data['name'] = name
 
-                values.write(render_template('values.yaml', template_data).encode())
-                values.flush()
-
-                secrets.write(render_template('secrets/common.yaml', template_data).encode())
-                secrets.flush()
-
-                hub_secrets.write(render_template('secrets/{}.yaml'.format(name), template_data).encode())
-                hub_secrets.flush()
-
-                install_cmd = [
-                    'upgrade',
-                    '--install',
-                    '--wait',
-                    '--debug',
-                    name,
-                    '--namespace', name,
-                    'hub',
-                    '-f', values.name,
-                    '-f', secrets.name,
-                    '-f', hub_secrets.name
-                ]
-                if dry_run:
-                    install_cmd.append('--dry-run')
-                if debug:
-                    install_cmd.append('--debug')
-                helm(*install_cmd)
+        Pool(16).starmap(partial(deploy_hub, deployment, dry_run, debug), cluster['hubs'].items())
 
         # Install our edge
         helm('dep', 'up', cwd='edge')
