@@ -55,7 +55,6 @@ jupyterhub:
       full-config: {{ config|jsonify|safe }}
 
   singleuser:
-    schedulerStrategy: pack
     image:
       name: yuvipanda/data8x-user
       tag: v2
