@@ -2,10 +2,16 @@ jupyterhub:
   proxy:
     service:
       type: ClusterIP
-  singleuser:
-    memory:
-      limit: 256M
-      guarantee: 256M
+    nginx:
+      resources:
+        requests:
+          cpu: 0.4
+          memory: 1Gi
+    chp:
+      resources:
+        requests:
+          cpu: 0.4
+          memory: 512Mi
   prePuller:
     hook:
       enabled: false
@@ -13,6 +19,10 @@ jupyterhub:
       enabled: true
   hub:
     concurrentSpawnLimit: 100
+    resources:
+      requests:
+        cpu: 1
+        memory: 1Gi
     extraVolumes:
     - name: csql-secret
       secret:
