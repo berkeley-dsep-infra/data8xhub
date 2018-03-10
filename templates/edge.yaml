@@ -2,3 +2,6 @@ hubs:
   {% for name, config in cluster.hubs.items() %}
   - {{ name }}
   {% endfor %}
+
+proxy:
+  replicaCount: {{ cluster.hubs|length }}
