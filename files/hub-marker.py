@@ -11,3 +11,7 @@ class CustomAuthenticator(DummyAuthenticator):
         return ret
 
 c.JupyterHub.authenticator_class = CustomAuthenticator
+
+c.JupyterHub.tornado_settings = {
+    'slow_spawn_timeout': 1,
+}
