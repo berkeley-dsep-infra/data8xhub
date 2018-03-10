@@ -161,7 +161,6 @@ def deploy_hub(deployment, data, dry_run, debug, name, hub):
             'upgrade',
             '--install',
             '--wait',
-            '--debug',
             name,
             '--namespace', name,
             'hub',
