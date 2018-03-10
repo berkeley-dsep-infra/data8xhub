@@ -16,7 +16,7 @@ jupyterhub:
     hook:
       enabled: false
     continuous:
-      enabled: true
+      enabled: false
   hub:
     concurrentSpawnLimit: 100
     resources:
