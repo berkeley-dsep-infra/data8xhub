@@ -12,6 +12,7 @@ import logging
 import tempfile
 import subprocess
 import json
+import copy
 import glob
 from jinja2 import Environment, FileSystemLoader
 from ruamel.yaml import YAML
@@ -56,9 +57,11 @@ def merge_dictionaries(a, b, path=None, update=True):
             a[key] = b[key]
     return a
 
-def get_data(deployment):
-    with open('config.yaml') as c, open('secret.yaml') as s:
-        config = merge_dictionaries(yaml.load(c), yaml.load(s))
+def get_data(deployment, config_files):
+    config = {}
+    for config_file in config_files:
+        with open(config_file) as f:
+            config = merge_dictionaries(config, yaml.load(f))
     files = {}
     for filename in glob.glob('files/*'):
         if not os.path.basename(filename).startswith('.'):
@@ -88,8 +91,7 @@ def use_cluster(deployment, cluster, zone):
     gcloud('container', 'clusters', 'get-credentials', cluster_name, '--zone', zone)
 
 
-def gdm(deployment, create, dry_run, debug):
-    data = get_data(deployment)
+def gdm(deployment, data, create, dry_run, debug):
     gdm = render_template('gdm.yaml', data)
     if debug:
         logging.info(gdm)
@@ -110,8 +112,7 @@ def gdm(deployment, create, dry_run, debug):
         gcloud(*args)
 
 
-def init_support(deployment, dry_run, debug):
-    data = get_data(deployment)
+def init_support(deployment, data, dry_run, debug):
 
     for name, cluster in data['config']['clusters'].items():
         use_cluster(deployment, name, cluster['zone'])
@@ -141,9 +142,9 @@ def init_support(deployment, dry_run, debug):
             install_cmd.append('--dry-run')
         helm(*install_cmd)
 
-def deploy_hub(deployment, dry_run, debug, name, hub):
+def deploy_hub(deployment, data, dry_run, debug, name, hub):
     with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets, tempfile.NamedTemporaryFile() as hub_secrets:
-        template_data = get_data(deployment)
+        template_data = copy.deepcopy(data)
         template_data['hub'] = hub
         template_data['name'] = name
 
@@ -174,8 +175,7 @@ def deploy_hub(deployment, dry_run, debug, name, hub):
             install_cmd.append('--debug')
         helm(*install_cmd)
 
-def deploy(deployment, dry_run, debug):
-    data = get_data(deployment)
+def deploy(deployment, data, dry_run, debug):
     helm('repo', 'add', 'jupyterhub', 'https://jupyterhub.github.io/helm-chart')
 
     for name, cluster in data['config']['clusters'].items():
@@ -191,7 +191,7 @@ def deploy(deployment, dry_run, debug):
         helm('dep', 'up', cwd='edge')
 
         with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets:
-            template_data = get_data(deployment)
+            template_data = copy.deepcopy(data)
             template_data['cluster'] = cluster
 
             values.write(render_template('edge.yaml', template_data).encode())
@@ -264,6 +264,13 @@ def main():
         help='Do not execute action'
     )
 
+    argparser.add_argument(
+        '--config',
+        action='append',
+        default=[],
+        help='List of config files to use'
+    )
+
     subparsers = argparser.add_subparsers(
         help='Actions to perform',
         dest='action'
@@ -291,15 +298,17 @@ def main():
     )
 
     args = argparser.parse_args()
-
+    if not args.config:
+        args.config = ['config.yaml', 'secret.yaml']
+    data = get_data(args.deployment, args.config)
     if args.action == 'gdm':
-        gdm(args.deployment, args.create, args.dry_run, args.debug)
+        gdm(args.deployment, data, args.create, args.dry_run, args.debug)
     elif args.action == 'init_support':
-        init_support(args.deployment, args.dry_run, args.debug)
+        init_support(args.deployment, data, args.dry_run, args.debug)
     elif args.action == 'deploy':
-        deploy(args.deployment, args.dry_run, args.debug)
+        deploy(args.deployment, data, args.dry_run, args.debug)
     elif args.action == 'teardown':
-        teardown(args.deployment)
+        teardown(args.deployment, data)
 
 
 
