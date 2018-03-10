@@ -55,8 +55,11 @@ jupyterhub:
       full-config: {{ config|jsonify|safe }}
 
   singleuser:
+    memory:
+      limit: 128M
+      guarantee: 128M
     image:
-      name: yuvipanda/data8x-user
+      name: gcr.io/data8x-scratch/user-image
       tag: v2
     storage:
-      type: custom
+      type: none
