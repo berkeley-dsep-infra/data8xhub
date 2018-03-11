@@ -87,7 +87,9 @@ resources:
        - key: startup-script
          value: |
            #!/bin/bash
+           set -euxo pipefail
            CLONE_PATH=/var/lib/ansible
+           sudo apt-get update
            sudo apt-get install --yes ansible git
            sudo git clone http://github.com/berkeley-dsep-infra/data8xhub ${CLONE_PATH}
            sudo ansible-playbook -c local -i localhost, ${CLONE_PATH}/ansible/playbook.yml
