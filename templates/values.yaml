@@ -40,6 +40,7 @@ jupyterhub:
           readOnly: true
     extraEnv:
       HUB_NAME: {{ name }}
+      CLUSTER_NAME: {{ cluster_name }}
       SHARDER_DB_USERNAME: {{ deployment }}-db-proxyuser
       SHARDER_DB_PASSWORD: {{ config.sql.password }}
       SHARDER_DB_NAME: {{ deployment }}-nfs-sharder-db

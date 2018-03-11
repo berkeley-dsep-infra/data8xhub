@@ -142,11 +142,24 @@ def init_support(deployment, data, dry_run, debug):
             install_cmd.append('--dry-run')
         helm(*install_cmd)
 
-def deploy_hub(deployment, data, dry_run, debug, name, hub):
+    # Initialize helm in edge
+
+    use_cluster(deployment, 'edge', cluster['zone'])
+    # Get Helm RBAC set up!
+    helm_rbac = render_template('helm-rbac.yaml', data)
+    subprocess.run(['kubectl', 'apply', '-f', '-'], input=helm_rbac.encode(), check=True)
+
+    # Initialize Helm!
+    subprocess.run(['helm', 'init', '--service-account', 'tiller', '--upgrade'], check=True)
+    # wait for tiller to be up
+    kubectl('rollout', 'status', '--watch', 'deployment/tiller-deploy', '--namespace=kube-system')
+
+def deploy_hub(deployment, data, dry_run, debug, cluster_name, name, hub):
     with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets, tempfile.NamedTemporaryFile() as hub_secrets:
         template_data = copy.deepcopy(data)
         template_data['hub'] = hub
         template_data['name'] = name
+        template_data['cluster_name'] = cluster_name
 
         values.write(render_template('values.yaml', template_data).encode())
         values.flush()
@@ -183,10 +196,9 @@ def deploy(deployment, data, dry_run, debug):
         # deploy the hubs
         helm('dep', 'up', cwd='hub')
 
+        Pool(8).starmap(partial(deploy_hub, deployment, data, dry_run, debug, name), cluster['hubs'].items())
 
-        Pool(16).starmap(partial(deploy_hub, deployment, dry_run, debug), cluster['hubs'].items())
-
-        # Install our edge
+        # Install inner-edge
         helm('dep', 'up', cwd='edge')
 
         with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets:
@@ -203,7 +215,6 @@ def deploy(deployment, data, dry_run, debug):
                 'upgrade',
                 '--install',
                 '--wait',
-                '--debug',
                 'edge',
                 '--namespace', 'edge',
                 'edge',
@@ -216,11 +227,54 @@ def deploy(deployment, data, dry_run, debug):
                 install_cmd.append('--debug')
             helm(*install_cmd)
 
+    # Install outer-edge
+    helm('dep', 'up', cwd='outer-edge')
+
+    with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets:
+        template_data = copy.deepcopy(data)
+        # Dynamically figure out the loadbalancer IPs of the inner-edges of each cluster
+        cluster_edges = []
+        for name, cluster in data['config']['clusters'].items():
+            use_cluster(deployment, name, cluster['zone'])
+
+            edge_ip = subprocess.check_output([
+                'kubectl',
+                '--namespace', 'edge',
+                'get', 'svc', 'edge-proxy',
+                '-o', "jsonpath={.status.loadBalancer.ingress[0].ip}"
+            ]).decode().strip()
+            cluster_edges.append({
+                'name': name,
+                'ip': edge_ip
+            })
+
+        template_data['clusterEdges'] = cluster_edges
+        values.write(render_template('outer-edge.yaml', template_data).encode())
+        values.flush()
+
+        secrets.write(render_template('secrets/outer-edge.yaml', template_data).encode())
+        secrets.flush()
+
+        install_cmd = [
+            'upgrade',
+            '--install',
+            '--wait',
+            'outer-edge',
+            '--namespace', 'outer-edge',
+            'outer-edge',
+            '-f', values.name,
+            '-f', secrets.name,
+        ]
+        if dry_run:
+            install_cmd.append('--dry-run')
+        if debug:
+            install_cmd.append('--debug')
+        use_cluster(deployment, 'edge', cluster['zone'])
+        helm(*install_cmd)
 
 
-def teardown(deployment):
-    data = get_data(deployment)
 
+def teardown(deployment, data):
     for cluster_name, cluster in data['config']['clusters'].items():
         try:
             use_cluster(deployment, cluster_name, cluster['zone'])

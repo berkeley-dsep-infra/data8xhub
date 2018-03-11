@@ -1,4 +1,37 @@
 resources:
+{% if config.edge %}
+- type: container.v1.cluster
+  name: {{ deployment }}-edge
+  properties:
+    zone: {{ config.edge.zone }}
+    cluster:
+      name: {{ deployment }}-edge
+      network: default
+      initialClusterVersion:  1.9.2-gke.1
+      addonsConfig:
+        httpLoadBalancing:
+          disabled: true
+      legacyAbac:
+        enabled: false
+      nodePools:
+        - initialNodeCount: {{ config.edge.initialNodeCount }}
+          name: default
+          autoscaling:
+            enabled: true
+            minNodeCount: {{ config.edge.initialNodeCount }}
+            maxNodeCount: 600
+          config:
+            machineType: {{ config.edge.machineType }}
+            diskSizeGb: {{ config.edge.bootDiskSizeGb }}
+            metadata:
+              deployment: {{ deployment }}
+              cluster: edge
+            oauthScopes:
+              - https://www.googleapis.com/auth/compute
+              - https://www.googleapis.com/auth/devstorage.read_only
+              - https://www.googleapis.com/auth/logging.write
+              - https://www.googleapis.com/auth/monitoring
+{% endif %}
 {%- for name, cluster in config.clusters.items() %}
 - type: container.v1.cluster
   name: {{ deployment }}-{{ name }}

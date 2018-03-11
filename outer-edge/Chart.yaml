@@ -1,0 +1,4 @@
+apiVersion: v1
+description: Intelligent edge proxy for multiple clusters
+name: outer-edge
+version: 0.1.0
