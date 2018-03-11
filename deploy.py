@@ -269,12 +269,22 @@ def deploy(deployment, data, dry_run, debug):
             install_cmd.append('--dry-run')
         if debug:
             install_cmd.append('--debug')
-        use_cluster(deployment, 'outer-edge', cluster['zone'])
+        use_cluster(deployment, 'outer-edge', data['config']['outerEdge']['zone'])
         helm(*install_cmd)
 
 
 
 def teardown(deployment, data):
+    """
+    Tear down the deployment.
+
+    We explicitly delete anything in the k8s cluster that might be holding cloud resources.
+    1. PVCs (which hold disks)
+    2. Deployments with PVCs attached (so the disks can be released)
+    3. Services (which might hold LoadBalancer instances)
+
+    Then we call gdm to delete the whole deployment
+    """
     for cluster_name, cluster in data['config']['clusters'].items():
         try:
             use_cluster(deployment, cluster_name, cluster['zone'])
@@ -283,6 +293,8 @@ def teardown(deployment, data):
 
         kubectl('--namespace', 'cluster-support', 'delete', 'deployment', '--all', '--now')
         kubectl('--namespace', 'cluster-support', 'delete', 'pvc', '--all', '--now')
+        kubectl('--namespace', 'cluster-support', 'delete', 'service', '--all', '--now')
+        kubectl('--namespace', 'inner-edge', 'delete', 'service', '--all', '--now')
 
         for name in cluster['hubs']:
             # Kill deployments so PVCs can be released, then kill PVCs too
@@ -294,6 +306,9 @@ def teardown(deployment, data):
                 kubectl('--namespace', name, 'delete', 'pvc', '--all', '--now')
             except subprocess.CalledProcessError:
                 pass
+    use_cluster(deployment, 'outer-edge', data['config']['outerEdge']['zone'])
+    kubectl('--namespace', 'outer-edge', 'delete', 'service', '--all', '--now')
+
     gcloud('deployment-manager', 'deployments', 'delete', deployment)
 
 
