@@ -57,6 +57,10 @@ resources:
             machineType: {{ cluster.machineType }}
             diskSizeGb: {{ cluster.bootDiskSizeGb }}
             imageType: ubuntu
+            # Network tags, used to provide access between k8s and NFS nodes
+            tags:
+              - deployment-{{ deployment }}
+              - role-hub-cluster
             metadata:
               deployment: {{ deployment }}
               cluster: {{ name }}
@@ -78,6 +82,10 @@ resources:
   properties:
     zone: {{ fileserver.zone }}
     machineType: https://www.googleapis.com/compute/v1/projects/{{ config.project }}/zones/{{ fileserver.zone }}/machineTypes/{{ fileserver.machineType }}
+    tags:
+      items:
+        - deployment-{{ deployment }}
+        - role-nfs-host
     metadata:
       items:
        - key: deployment
@@ -112,6 +120,36 @@ resources:
       - name: External NAT
         type: ONE_TO_ONE_NAT
 {% endfor %}
+- type: compute.v1.firewall
+  name: {{ deployment }}-nfs-firewall
+  properties:
+    name: {{ deployment }}-nfs-firewall
+    description: Allow NFS access from k8s cluster to NFS hosts
+    network: global/networks/default
+    sourceTags:
+      - deployment-{{ deployment }}
+      - role-hub-cluster
+    targetTags:
+      - deployment-{{ deployment }}
+      - role-nfs-host
+    allowed:
+      - IPProtocol: TCP
+        ports: ["0-65535"]
+- type: compute.v1.firewall
+  name: {{ deployment }}-nfs-firewall-egress
+  properties:
+    name: {{ deployment }}-nfs-firewall-egress
+    description: Allow NFS access from k8s cluster to NFS hosts
+    network: global/networks/default
+    sourceTags:
+      - deployment-{{ deployment }}
+      - role-hub-cluster
+    targetTags:
+      - deployment-{{ deployment }}
+      - role-nfs-host
+    allowed:
+      - IPProtocol: TCP
+        ports: ["0-65535"]
 - type: sqladmin.v1beta4.instance
   name: {{ deployment }}-db-instance
   properties:
