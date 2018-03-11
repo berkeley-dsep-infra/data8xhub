@@ -63,4 +63,4 @@ jupyterhub:
       name: gcr.io/data8x-scratch/user-image
       tag: v2
     storage:
-      type: none
+      type: custom

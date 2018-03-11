@@ -126,21 +126,26 @@ def init_support(deployment, data, dry_run, debug):
         # wait for tiller to be up
         kubectl('rollout', 'status', '--watch', 'deployment/tiller-deploy', '--namespace=kube-system')
 
-        # Install cluster-wide charts
-        helm('dep', 'up', cwd='cluster-support')
-        install_cmd = [
-            'upgrade',
-            '--install',
-            '--wait',
-            'cluster-support',
-            '--namespace', 'cluster-support',
-            'cluster-support'
-        ]
-        if debug:
-            install_cmd.append('--debug')
-        if dry_run:
-            install_cmd.append('--dry-run')
-        helm(*install_cmd)
+        with tempfile.NamedTemporaryFile() as values:
+            # Install cluster-wide charts
+            values.write(render_template('cluster-support.yaml', data).encode())
+            values.flush()
+
+            helm('dep', 'up', cwd='cluster-support')
+            install_cmd = [
+                'upgrade',
+                '--install',
+                '--wait',
+                'cluster-support',
+                '--namespace', 'cluster-support',
+                'cluster-support',
+                '-f', values.name
+            ]
+            if debug:
+                install_cmd.append('--debug')
+            if dry_run:
+                install_cmd.append('--dry-run')
+            helm(*install_cmd)
 
     # Initialize helm in edge
 

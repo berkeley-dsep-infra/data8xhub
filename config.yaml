@@ -29,7 +29,11 @@ clusters:
 
 fileservers:
   fileserver-01:
-    machineType: n1-highcpu-8
+    machineType: n1-highcpu-2
+    dataDiskSizeGb: 1000
+    zone: us-central1-a
+  fileserver-02:
+    machineType: n1-highcpu-2
     dataDiskSizeGb: 1000
     zone: us-central1-a
 

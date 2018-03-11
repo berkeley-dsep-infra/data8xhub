@@ -1,0 +1,40 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: nfs-mounter
+spec:
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 100%
+  template:
+    metadata:
+      name: nfs-mounter
+      annotations:
+        # This lets us autorestart when the configmap changes!
+        checksum/config-map: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        app: nfs-mounter
+    spec:
+      hostPID: true
+      # Temporarily, I think in production we want to give this more time to exit!
+      terminationGracePeriodSeconds: 0
+      containers:
+        - image:  gcr.io/data8x-scratch/nfs-mounter:v1
+          name: nfs-mounter
+          securityContext:
+            privileged: true
+          workingDir: /srv/script
+          command:
+          - python3
+          args:
+          - /srv/script/mount-script.py
+          securityContext:
+              privileged: true
+          volumeMounts:
+            - mountPath: /srv/script
+              name: nfs-mounter-script
+      volumes:
+        - name: nfs-mounter-script
+          configMap:
+            name: nfs-mounter-script

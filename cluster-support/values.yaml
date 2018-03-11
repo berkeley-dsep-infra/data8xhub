@@ -1,11 +1,3 @@
-nfsFlexVolume:
-  image:
-    repository: yuvipanda/nfs-flex-volume
-    tag: v0.4
-    pullPolicy: Always
-  flexVolume:
-    pluginDir: /home/kubernetes/flexvolume
-
 prometheus:
   nodeExporter:
     updateStrategy:

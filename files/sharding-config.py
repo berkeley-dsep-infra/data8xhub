@@ -26,15 +26,11 @@ def setup_homedir_sharding():
             nfsserver = sharder.shard(self.user.name)
             self.volumes = [{
                 'name': 'home',
-                'flexVolume': {
-                    'driver': 'yuvi.in/nfs-flex-volume',
-                    'options': {
-                        'share': '{}:/export/pool0/homes'.format(nfsserver),
-                        'mountOptions': 'rw,soft',
-                        'subPath': escapism.escape(self.user.name),
-                        'createIfNecessary': 'true',
-                        'createMode': '0755'
-                    }
+                'hostPath': {
+                    'path': '/mnt/fileservers/{fileserver}/{username}'.format(
+                        fileserver=nfsserver,
+                        username=escapism.escape(self.user.name)
+                    )
                 }
             }]
             self.volume_mounts = [{

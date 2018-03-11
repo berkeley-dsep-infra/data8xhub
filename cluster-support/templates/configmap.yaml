@@ -1,0 +1,9 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nfs-mounter-script
+data:
+  mount-script.py: |
+{{ .Values.nfsMounter.mountScript | indent 4}}
+  host-script.py: |
+{{ .Values.nfsMounter.hostScript | indent 4}}
