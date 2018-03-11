@@ -1,9 +1,9 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: edge-proxy
+  name: inner-edge-proxy
   labels:
-    app: edge
+    app: inner-edge
     component: proxy
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     release: {{ .Release.Name }}
@@ -16,7 +16,7 @@ spec:
         # This lets us autorestart when the configmap changes!
         checksum/config-map: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
-        app: edge
+        app: inner-edge
         component: proxy
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         release: {{ .Release.Name }}
@@ -24,15 +24,15 @@ spec:
     spec:
       volumes:
       - configMap:
-          name: edge-proxy-config
-        name: edge-proxy-config
+          name: inner-edge-proxy-config
+        name: inner-edge-proxy-config
       containers:
         - name: {{ .Chart.Name }}
           image: openresty/openresty:1.13.6.1-1-xenial
           ports:
             - containerPort: 80
           volumeMounts:
-          - name: edge-proxy-config
+          - name: inner-edge-proxy-config
             mountPath: /etc/nginx/conf.d
           resources:
 {{ toYaml .Values.proxy.resources | indent 12 }}

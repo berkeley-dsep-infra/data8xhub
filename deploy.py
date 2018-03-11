@@ -144,7 +144,7 @@ def init_support(deployment, data, dry_run, debug):
 
     # Initialize helm in edge
 
-    use_cluster(deployment, 'edge', cluster['zone'])
+    use_cluster(deployment, 'outer-edge', cluster['zone'])
     # Get Helm RBAC set up!
     helm_rbac = render_template('helm-rbac.yaml', data)
     subprocess.run(['kubectl', 'apply', '-f', '-'], input=helm_rbac.encode(), check=True)
@@ -199,25 +199,25 @@ def deploy(deployment, data, dry_run, debug):
         Pool(8).starmap(partial(deploy_hub, deployment, data, dry_run, debug, name), cluster['hubs'].items())
 
         # Install inner-edge
-        helm('dep', 'up', cwd='edge')
+        helm('dep', 'up', cwd='inner-edge')
 
         with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets:
             template_data = copy.deepcopy(data)
             template_data['cluster'] = cluster
 
-            values.write(render_template('edge.yaml', template_data).encode())
+            values.write(render_template('inner-edge.yaml', template_data).encode())
             values.flush()
 
-            secrets.write(render_template('secrets/edge.yaml', template_data).encode())
+            secrets.write(render_template('secrets/inner-edge.yaml', template_data).encode())
             secrets.flush()
 
             install_cmd = [
                 'upgrade',
                 '--install',
                 '--wait',
-                'edge',
-                '--namespace', 'edge',
-                'edge',
+                'inner-edge',
+                '--namespace', 'inner-edge',
+                'inner-edge',
                 '-f', values.name,
                 '-f', secrets.name,
             ]
@@ -239,8 +239,8 @@ def deploy(deployment, data, dry_run, debug):
 
             edge_ip = subprocess.check_output([
                 'kubectl',
-                '--namespace', 'edge',
-                'get', 'svc', 'edge-proxy',
+                '--namespace', 'inner-edge',
+                'get', 'svc', 'proxy',
                 '-o', "jsonpath={.status.loadBalancer.ingress[0].ip}"
             ]).decode().strip()
             cluster_edges.append({
@@ -269,7 +269,7 @@ def deploy(deployment, data, dry_run, debug):
             install_cmd.append('--dry-run')
         if debug:
             install_cmd.append('--debug')
-        use_cluster(deployment, 'edge', cluster['zone'])
+        use_cluster(deployment, 'outer-edge', cluster['zone'])
         helm(*install_cmd)
 
 

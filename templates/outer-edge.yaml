@@ -1,0 +1,4 @@
+clusterEdges: {{ clusterEdges|tojson }}
+
+proxy:
+  replicaCount: {{ config.outerEdge.proxy.replicaCount }}
