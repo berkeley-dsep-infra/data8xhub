@@ -10,9 +10,6 @@ spec:
   template:
     metadata:
       name: nfs-mounter
-      annotations:
-        # This lets us autorestart when the configmap changes!
-        checksum/config-map: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
         app: nfs-mounter
     spec:
@@ -20,21 +17,16 @@ spec:
       # Temporarily, I think in production we want to give this more time to exit!
       terminationGracePeriodSeconds: 0
       containers:
-        - image:  gcr.io/data8x-scratch/nfs-mounter:v1
+        - image:  gcr.io/data8x-scratch/nfs-mounter:v7
           name: nfs-mounter
+          env:
+          # These two variables changing will restart all the daemonset pods
+          - name: FILESERVERS
+            value: {{ toJson .Values.nfsMounter.fileservers | quote }}
+          - name: MOUNT_PATH_TEMPLATE
+            value: {{ .Values.nfsMounter.mountPathTemplate | quote }}
           securityContext:
             privileged: true
           workingDir: /srv/script
-          command:
-          - python3
-          args:
-          - /srv/script/mount-script.py
           securityContext:
               privileged: true
-          volumeMounts:
-            - mountPath: /srv/script
-              name: nfs-mounter-script
-      volumes:
-        - name: nfs-mounter-script
-          configMap:
-            name: nfs-mounter-script
