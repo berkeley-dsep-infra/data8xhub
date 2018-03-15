@@ -3,6 +3,7 @@ import escapism
 import os
 import yaml
 import z2jh
+from tornado import gen
 
 def setup_homedir_sharding():
     # Inside a function to prevent scopes from leaking
@@ -22,8 +23,9 @@ def setup_homedir_sharding():
     sharder = Sharder(engine, 'homedir', fileservers)
 
     class CustomSpawner(KubeSpawner):
+        @gen.coroutine
         def start(self):
-            nfsserver = sharder.shard(self.user.name)
+            nfsserver = yield self.asynchronize(sharder.shard, self.user.name)
             self.volumes = [{
                 'name': 'home',
                 'hostPath': {
@@ -37,8 +39,9 @@ def setup_homedir_sharding():
                 'name': 'home',
                 'mountPath': '/home/jovyan'
             }]
-            return super().start()
+            return (yield super().start())
 
     c.JupyterHub.spawner_class = CustomSpawner
+
 
 setup_homedir_sharding()
