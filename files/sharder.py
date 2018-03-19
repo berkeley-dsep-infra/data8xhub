@@ -2,6 +2,7 @@ import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, UniqueConstraint, func, Index
 from sqlalchemy.orm import sessionmaker
+import psycopg2.pool
 
 Base = declarative_base()
 
@@ -30,11 +31,38 @@ class Sharder:
     across multiple buckets, ensuring that once an object is assigned to a bucket it always
     is assigned to the same bucket.
     """
-    def __init__(self, engine, kind, buckets):
-        self.engine = engine
+    SCHEMA = """
+    CREATE TABLE IF NOT EXISTS entries_v1 (
+        id      SERIAL PRIMARY KEY NOT NULL,
+        kind    TEXT NOT NULL,
+        bucket  TEXT NOT NULL,
+        name    TEXT NOT NULL,
+        UNIQUE (kind, name)
+    );
+    CREATE INDEX IF NOT EXISTS entries_v1_kind_name_index ON entries_v1 (kind, name);
+    """
+    def __init__(self, hostname, username, password, dbname, kind, buckets, log):
         self.buckets = buckets
         self.kind = kind
-        Base.metadata.create_all(self.engine)
+        self.log = log
+
+        self.pool = psycopg2.pool.ThreadedConnectionPool(1, 4, user=username, host=hostname, password=password, dbname=dbname)
+        with self.pool.getconn() as conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(self.SCHEMA)
+                    conn.commit()
+
+                    # Make sure that we have at least one dummy entry for each fileserver
+                    for bucket in buckets:
+                        cur.execute("""
+                        INSERT INTO entries_v1(kind, bucket, name)
+                        VALUES(%s, %s, %s)
+                        ON CONFLICT DO NOTHING
+                        """, (self.kind, bucket, f'dummy-{bucket}'))
+                        conn.commit()
+            finally:
+                self.pool.putconn(conn)
 
     def shard(self, name):
         """
@@ -43,31 +71,32 @@ class Sharder:
         If it already isn't in the database, a new entry will be created in the database,
         placing it in the currently least populated bucket.
         """
-        s = sessionmaker(bind=self.engine)()
-        entry = s.query(Entry).filter(Entry.kind==self.kind).filter(Entry.name==name).one_or_none()
-        if entry:
-            return entry.bucket
-        else:
-            return self._create_entry(s, name)
+        with self.pool.getconn() as conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                    SELECT bucket FROM entries_v1
+                    WHERE kind=%s AND name=%s
+                    LIMIT 1
+                    """, (self.kind, name))
+                    row = cur.fetchone()
+                    if row:
+                        bucket = row[0]
+                        self.log.info(f'Found {name} sharded to bucket {bucket}')
+                        return bucket
 
-    def _create_entry(self, session, name):
-        """
-        Create an entry for name in the bucket currently least populated
-        """
-        bucket_counts = session.query(Entry.bucket, func.count('*').label('entries'))\
-                               .filter(Entry.kind==self.kind)\
-                               .group_by(Entry.bucket).all()
-
-        all_bucket_counts = {b: 0 for b in self.buckets}
-
-        # It's possible there exist buckets that don't have any entries
-        for bucket, entries_count in bucket_counts:
-            if bucket in all_bucket_counts:
-                all_bucket_counts[bucket] = entries_count
-
-        top_bucket = sorted(all_bucket_counts.items(), key=lambda i: i[1])[0][0]
-
-        e = Entry(name=name, kind=self.kind, bucket=top_bucket)
-        session.add(e)
-        session.commit()
-        return top_bucket
+                    # Insert the data!
+                    cur.execute("""
+                    INSERT INTO entries_v1 (name, kind, bucket)
+                    VALUES(
+                        %s,
+                        %s,
+                        (SELECT bucket FROM entries_v1 WHERE kind=%s GROUP BY bucket ORDER BY count(bucket) LIMIT 1)
+                    ) RETURNING bucket;
+                    """, (name, self.kind, self.kind))
+                    conn.commit()
+                    bucket = cur.fetchone()[0]
+                    self.log.info(f'Sharded {name} to bucket {bucket}')
+                    return bucket
+            finally:
+                self.pool.putconn(conn)
