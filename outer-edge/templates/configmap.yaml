@@ -15,6 +15,18 @@ data:
 
       gzip on;
 
+      # Get metrics out!
+      vhost_traffic_status_zone;
+
+      server {
+        listen 127.0.0.1:8001;
+
+        location /status {
+
+          vhost_traffic_status_display;
+        }
+      }
+
       map $http_upgrade $connection_upgrade {
           default upgrade;
           '' close;
