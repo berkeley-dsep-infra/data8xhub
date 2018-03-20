@@ -86,15 +86,61 @@ def kubectl(*args, **kwargs):
     logging.info("Executing kubectl", ' '.join(args))
     return subprocess.check_call(['kubectl'] + list(args), **kwargs)
 
-def use_cluster(deployment, cluster, zone):
+def use_cluster(deployment, cluster, zone=None, region=None):
     cluster_name = '{}-{}'.format(deployment, cluster)
-    gcloud('container', 'clusters', 'get-credentials', cluster_name, '--zone', zone)
+    if region:
+        gcloud('beta', 'container', 'clusters', 'get-credentials', cluster_name, '--region', region)
+    else:
+        gcloud('container', 'clusters', 'get-credentials', cluster_name, '--zone', zone)
 
+
+def create_cluster(name, region, node_zone, node_type, initial_nodecount, min_nodecount, max_nodecount, tags):
+    gcloud(
+        'beta', 'container', 'clusters', 'create',
+        '--image-type', 'ubuntu',
+        '--machine-type', node_type,
+        '--disk-size', '100',
+        '--region', region,
+        '--node-locations', node_zone,
+        '--num-nodes',  str(initial_nodecount),
+        '--enable-autoscaling',
+        '--min-nodes', str(min_nodecount),
+        '--max-nodes', str(max_nodecount),
+        '--tags', ','.join(tags),
+        '--cluster-version', '1.9.4-gke.1',
+        '--disable-addons', 'HttpLoadBalancing,KubernetesDashboard',
+        name
+    )
+
+def delete_cluster(name, region):
+    gcloud(
+        'beta', 'container', 'clusters', 'delete',
+        '--region', region,
+        name
+    )
 
 def gdm(deployment, data, create, dry_run, debug):
     gdm = render_template('gdm.yaml', data)
     if debug:
         logging.info(gdm)
+
+    config = data['config']
+
+    cluster_calls = []
+    for cluster_name, cluster in config['clusters'].items():
+        cluster_calls.append((
+            f'{deployment}-{cluster_name}',
+            config['region'],
+            cluster['zone'],
+            'n1-standard-4',
+            cluster['initialNodeCount'],
+            cluster['initialNodeCount'],
+            100,
+            [f'deployment-{deployment}', 'role-hub-cluster']
+        ))
+
+    Pool(8).starmap(create_cluster, cluster_calls)
+
     with tempfile.NamedTemporaryFile(delete=(not debug)) as out:
         out.write(gdm.encode())
         out.flush()
@@ -115,7 +161,7 @@ def gdm(deployment, data, create, dry_run, debug):
 def init_support(deployment, data, dry_run, debug):
 
     for name, cluster in data['config']['clusters'].items():
-        use_cluster(deployment, name, cluster['zone'])
+        use_cluster(deployment, name, region=data['config']['region'])
 
         # Get Helm RBAC set up!
         helm_rbac = render_template('helm-rbac.yaml', data)
@@ -196,12 +242,12 @@ def deploy(deployment, data, dry_run, debug):
     helm('repo', 'add', 'jupyterhub', 'https://jupyterhub.github.io/helm-chart')
 
     for name, cluster in data['config']['clusters'].items():
-        use_cluster(deployment, name, cluster['zone'])
+        use_cluster(deployment, name, region=data['config']['region'])
 
         # deploy the hubs
         helm('dep', 'up', cwd='hub')
 
-        Pool(8).starmap(partial(deploy_hub, deployment, data, dry_run, debug, name), cluster['hubs'].items())
+        Pool(16).starmap(partial(deploy_hub, deployment, data, dry_run, debug, name), cluster['hubs'].items())
 
         # Install inner-edge
         helm('dep', 'up', cwd='inner-edge')
@@ -240,7 +286,7 @@ def deploy(deployment, data, dry_run, debug):
         # Dynamically figure out the loadbalancer IPs of the inner-edges of each cluster
         cluster_edges = []
         for name, cluster in data['config']['clusters'].items():
-            use_cluster(deployment, name, cluster['zone'])
+            use_cluster(deployment, name, region=data['config']['region'])
 
             edge_ip = subprocess.check_output([
                 'kubectl',
@@ -292,7 +338,7 @@ def teardown(deployment, data):
     """
     for cluster_name, cluster in data['config']['clusters'].items():
         try:
-            use_cluster(deployment, cluster_name, cluster['zone'])
+            use_cluster(deployment, cluster_name, region=data['config']['region'])
         except:
             continue
 
@@ -311,8 +357,14 @@ def teardown(deployment, data):
                 kubectl('--namespace', name, 'delete', 'pvc', '--all', '--now')
             except subprocess.CalledProcessError:
                 pass
-    use_cluster(deployment, 'outer-edge', data['config']['outerEdge']['zone'])
-    kubectl('--namespace', 'outer-edge', 'delete', 'service', '--all', '--now')
+
+        delete_cluster(f'{deployment}-{cluster_name}', data['config']['region'])
+
+    try:
+        use_cluster(deployment, 'outer-edge', data['config']['outerEdge']['zone'])
+        kubectl('--namespace', 'outer-edge', 'delete', 'service', '--all', '--now')
+    except subprocess.CalledProcessError:
+        pass
 
     gcloud('deployment-manager', 'deployments', 'delete', deployment)
 
