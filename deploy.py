@@ -218,8 +218,9 @@ def deploy_hub(deployment, data, dry_run, debug, cluster_name, name, hub):
         secrets.write(render_template('secrets/common.yaml', template_data).encode())
         secrets.flush()
 
-        hub_secrets.write(render_template('secrets/{}.yaml'.format(name), template_data).encode())
-        hub_secrets.flush()
+        if os.path.exists(f'templates/secrets/{name}.yaml'):
+            hub_secrets.write(render_template('secrets/{}.yaml'.format(name), template_data).encode())
+            hub_secrets.flush()
 
         install_cmd = [
             'upgrade',
