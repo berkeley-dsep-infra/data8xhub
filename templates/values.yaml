@@ -1,5 +1,7 @@
 jupyterhub:
   proxy:
+    networkPolicy:
+      enabled: true
     service:
       type: ClusterIP
     nginx:
@@ -18,6 +20,8 @@ jupyterhub:
     continuous:
       enabled: false
   hub:
+    networkPolicy:
+      enabled: true
     concurrentSpawnLimit: 100
     resources:
       requests:
@@ -56,6 +60,8 @@ jupyterhub:
       full-config: {{ config|jsonify|safe }}
 
   singleuser:
+    networkPolicy:
+      enabled: true
     memory:
       limit: 128M
       guarantee: 128M

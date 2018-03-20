@@ -1,4 +1,6 @@
 prometheus:
+  networkPolicy:
+    enabled: true
   nodeExporter:
     updateStrategy:
       type: RollingUpdate

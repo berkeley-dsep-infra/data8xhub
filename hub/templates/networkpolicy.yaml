@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: inner-edge-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      name: proxy
+      component: proxy
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: inner-edge
+    ports:
+    - protocol: TCP
+      port: 8000
