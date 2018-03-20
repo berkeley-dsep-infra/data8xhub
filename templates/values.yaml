@@ -62,6 +62,16 @@ jupyterhub:
   singleuser:
     networkPolicy:
       enabled: true
+      egress:
+      - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+      - to:
+        - podSelector:
+            matchLabels:
+              app: reposync
     memory:
       limit: 128M
       guarantee: 128M
