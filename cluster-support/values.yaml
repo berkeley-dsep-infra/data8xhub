@@ -9,6 +9,13 @@ prometheus:
   rbac:
     create: true
   server:
+    resources:
+      requests:
+        cpu: "1"
+        memory: "2Gi"
+      limits:
+        cpu: "1"
+        memory: "2Gi"
     persistentVolume:
       # Use a large SSD Volume to keep lots of data!
       size: 2000Gi
