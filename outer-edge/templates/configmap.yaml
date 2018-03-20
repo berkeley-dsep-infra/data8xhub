@@ -59,6 +59,12 @@ data:
 
         listen 80;
 
+        location ~ ^/prometheus/(?<cluster>[a-zA-Z0-9.-]+)/(?<rest>.*)? {
+          proxy_set_header Host prometheus.$cluster;
+
+          proxy_pass http://$cluster/prometheus/$cluster/$rest$is_args$args;
+        }
+
         location / {
           proxy_pass http://$picked_upstream$uri$is_args$args;
 

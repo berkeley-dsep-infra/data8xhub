@@ -175,7 +175,10 @@ def init_support(deployment, data, dry_run, debug):
 
         with tempfile.NamedTemporaryFile() as values:
             # Install cluster-wide charts
-            values.write(render_template('cluster-support.yaml', data).encode())
+            template_data = copy.deepcopy(data)
+            template_data['cluster_name'] = name
+
+            values.write(render_template('cluster-support.yaml', template_data).encode())
             values.flush()
 
             helm('dep', 'up', cwd='cluster-support')
@@ -257,6 +260,7 @@ def deploy(deployment, data, dry_run, debug):
         with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets:
             template_data = copy.deepcopy(data)
             template_data['cluster'] = cluster
+            template_data['cluster_name'] = name
 
             values.write(render_template('inner-edge.yaml', template_data).encode())
             values.flush()

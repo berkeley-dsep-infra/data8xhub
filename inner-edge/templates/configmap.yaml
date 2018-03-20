@@ -63,6 +63,16 @@ data:
         {{ end }}
       }
 
+      # Make prometheus server publicly available
+      server {
+        server_name prometheus.{{ .Values.clusterName }};
+        listen 80;
+
+        location /prometheus/{{ .Values.clusterName }} {
+          proxy_pass http://cluster-support-prometheus-server.cluster-support.svc;
+        }
+      }
+
       server {
         error_log stderr;
         access_log /dev/stdout;

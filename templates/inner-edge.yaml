@@ -3,6 +3,7 @@ hubs:
   - {{ name }}
   {% endfor %}
 
+clusterName: {{ cluster_name }}
 proxy:
   replicaCount: {{ cluster.hubs|length }}
   resources:
