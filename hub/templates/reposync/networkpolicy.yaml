@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: reposync-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: reposync
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          component: singleuser-server
+          app: jupyterhub
+    ports:
+    - protocol: TCP
+      port: 9418
