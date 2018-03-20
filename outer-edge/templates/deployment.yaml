@@ -28,11 +28,12 @@ spec:
         name: outer-edge-proxy-config
       containers:
         - name: {{ .Chart.Name }}
-          image: openresty/openresty:1.13.6.1-1-xenial
+          image: quay.io/kubernetes-ingress-controller/nginx:0.37
           ports:
             - containerPort: 80
           volumeMounts:
           - name: outer-edge-proxy-config
-            mountPath: /etc/nginx/conf.d
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
           resources:
 {{ toYaml .Values.proxy.resources | indent 12 }}
