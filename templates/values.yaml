@@ -36,7 +36,7 @@ jupyterhub:
       image: gcr.io/cloudsql-docker/gce-proxy:1.11
       command:
       - "/cloud_sql_proxy"
-      - "-instances={{config.project}}:{{config.region}}:{{ deployment }}-db-instance=tcp:5432"
+      - "-instances={{config.project}}:{{config.region}}:{{ deployment }}-nfs-db-instance=tcp:5432"
       - "-credential_file=/secrets/cloudsql/credentials.json"
       volumeMounts:
         - name: csql-secret

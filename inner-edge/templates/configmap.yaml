@@ -77,7 +77,7 @@ data:
         error_log stderr;
         access_log /dev/stdout;
 
-        listen 80;
+        listen 80 default_server;
 
         location / {
           proxy_pass http://$picked_upstream$uri$is_args$args;

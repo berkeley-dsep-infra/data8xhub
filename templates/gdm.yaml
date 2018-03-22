@@ -146,24 +146,47 @@ resources:
       - IPProtocol: TCP
         ports: ["0-65535"]
 - type: sqladmin.v1beta4.instance
-  name: {{ deployment }}-db-instance
+  name: {{ deployment }}-nfs-db-instance
   properties:
     region: {{ config.region }}
     databaseVersion: POSTGRES_9_6
     backendType: SECOND_GEN
     settings:
       availabilityType: REGIONAL
-      tier: db-custom-1-4096
+      tier: db-custom-4-10240
 - type: sqladmin.v1beta4.database
   name: {{ deployment }}-nfs-sharder-db
   properties:
-    instance: $(ref.{{ deployment }}-db-instance.name)
+    instance: $(ref.{{ deployment }}-nfs-db-instance.name)
     name: {{ deployment }}-nfs-sharder-db
 # FIXME: Provide more fine-grained permissions here?
 - type: sqladmin.v1beta4.user
   name: {{ deployment }}-db-proxyuser
   properties:
-    instance: $(ref.{{ deployment }}-db-instance.name)
+    instance: $(ref.{{ deployment }}-nfs-db-instance.name)
+    name: {{ deployment }}-db-proxyuser
+    host: '%'
+    password: {{ config.sql.password }}
+- type: sqladmin.v1beta4.instance
+  name: {{ deployment }}-hubshard-db-instance
+  properties:
+    region: {{ config.region }}
+    databaseVersion: POSTGRES_9_6
+    backendType: SECOND_GEN
+    settings:
+      availabilityType: REGIONAL
+      tier: db-custom-4-10240
+- type: sqladmin.v1beta4.database
+  name: {{ deployment }}-hubshard-sharder-db
+  properties:
+    instance: $(ref.{{ deployment }}-hubshard-db-instance.name)
+    name: {{ deployment }}-hubshard-sharder-db
+# FIXME: Provide more fine-grained permissions here?
+- type: sqladmin.v1beta4.user
+  name: {{ deployment }}-hubshard-db-proxyuser
+  properties:
+    instance: $(ref.{{ deployment }}-hubshard-db-instance.name)
+    # Use the same name so we can reuse the csql stuff
     name: {{ deployment }}-db-proxyuser
     host: '%'
     password: {{ config.sql.password }}

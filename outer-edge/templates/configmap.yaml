@@ -33,7 +33,6 @@ data:
       }
 
       map $cookie_cluster $picked_upstream {
-        default all-clusters;
         ~^(?P<name>[\w-]+) $name;
       }
 
@@ -45,12 +44,10 @@ data:
       }
       {{ end }}
 
-      # Default upstream that contains all clusters
+      # Default upstream that contains the hubsharder
       # Used when a request does not have a cluster cookie set.
-      upstream all-clusters {
-        {{ range $cluster := .Values.clusterEdges }}
-        server {{ $cluster.ip }};
-        {{ end }}
+      upstream hubsharder {
+        server hubsharder.outer-edge.svc.cluster.local;
       }
 
       server {
@@ -63,6 +60,20 @@ data:
           proxy_set_header Host prometheus.$cluster;
 
           proxy_pass http://$cluster/prometheus/$cluster/$rest$is_args$args;
+        }
+
+        location /hub/lti/launch {
+          proxy_pass http://hubsharder;
+
+          # This is required for the target servers to know what
+          # exactly the original protocol / URI / Host was.
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Original-URI $request_uri;
+          # We explicitly use $http_host rather than $host because we want to
+          # preserve the Host headers coming in from the client. $host never
+          # includes ports, and causes notebooks to fail a cross origin check,
+          # since they check Host vs the Origin.
+          proxy_set_header Host $http_host;
         }
 
         location / {

@@ -290,8 +290,7 @@ def deploy(deployment, data, dry_run, debug):
     with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets:
         template_data = copy.deepcopy(data)
         # Dynamically figure out the loadbalancer IPs of the inner-edges of each cluster
-        cluster_edges = []
-        for name, cluster in data['config']['clusters'].items():
+        for name, cluster in template_data['config']['clusters'].items():
             use_cluster(deployment, name, region=data['config']['region'])
 
             edge_ip = subprocess.check_output([
@@ -300,12 +299,8 @@ def deploy(deployment, data, dry_run, debug):
                 'get', 'svc', 'proxy',
                 '-o', "jsonpath={.status.loadBalancer.ingress[0].ip}"
             ]).decode().strip()
-            cluster_edges.append({
-                'name': name,
-                'ip': edge_ip
-            })
+            cluster['ip'] = edge_ip
 
-        template_data['clusterEdges'] = cluster_edges
         values.write(render_template('outer-edge.yaml', template_data).encode())
         values.flush()
 

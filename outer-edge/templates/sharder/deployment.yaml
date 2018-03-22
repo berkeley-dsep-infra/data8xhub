@@ -1,0 +1,58 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: sharder
+  labels:
+    app: outer-edge
+    component: sharder
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.sharder.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: outer-edge
+        component: sharder
+        chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        release: {{ .Release.Name }}
+        heritage: {{ .Release.Service }}
+    spec:
+      volumes:
+      - name: csql-secret
+        secret:
+          secretName: csql-secret
+      containers:
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.11
+          command: 
+          - "/cloud_sql_proxy"
+          - "-instances={{ .Values.project }}:{{ .Values.region }}:{{ .Values.deployment }}-hubshard-db-instance=tcp:5432"
+          - "-credential_file=/secrets/cloudsql/credentials.json"
+          volumeMounts:
+            - name: csql-secret
+              mountPath: /secrets/cloudsql
+              readOnly: true
+        - name: hubsharder
+          image: gcr.io/data8x-scratch/hubsharder:93784c7
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8888
+          args:
+            - /srv/hubsharder/request-sharder.py
+          env: 
+          - name: SHARDER_DB_USERNAME
+            value: {{ .Values.csql.proxy.username }}
+          - name: SHARDER_DB_PASSWORD
+            value: {{ .Values.csql.proxy.password }}
+          - name: SHARDER_DB_NAME
+            value: {{ .Values.deployment }}-hubshard-sharder-db
+          - name: LTI_KEY
+            value: {{ .Values.lti.key | quote }}
+          - name: LTI_SECRET
+            value: {{ .Values.lti.secret | quote }}
+          - name: SHARDER_BUCKETS
+            value: {{ toJson .Values.sharderBuckets | quote}}
+          resources:
+{{ toYaml .Values.sharder.resources | indent 12 }}

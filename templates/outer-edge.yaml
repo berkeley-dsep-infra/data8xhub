@@ -1,5 +1,12 @@
-clusterEdges: {{ clusterEdges|tojson }}
+clusterEdges:
+{% for cluster_name, cluster in config.clusters.items() %}
+- name: {{ cluster_name }}
+  ip: {{ cluster.ip }}
+{% endfor %}
 
+project: {{ config.project }}
+region: {{ config.region }}
+deployment: {{ deployment }}
 proxy:
   replicaCount: {{ config.outerEdge.proxy.replicaCount }}
   resources:
@@ -9,3 +16,13 @@ proxy:
     limits:
       cpu: 0.25
       memory: 1Gi
+
+sharderBuckets: |
+{% for cluster_name, cluster in config.clusters.items() %}
+{% for hub_name, hub in cluster.hubs.items() %}
+  {"cluster": "{{cluster_name}}", "hub": "{{hub_name}}", "ip": "{{ cluster.ip }}"}
+{% endfor %}
+{% endfor %}
+
+sharder:
+ replicaCount: 1
