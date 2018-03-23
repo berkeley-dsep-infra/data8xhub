@@ -38,7 +38,7 @@ spec:
             value: inner_edge
           ports:
             - containerPort: 9913
-        - name: {{ .Chart.Name }}
+        - name: nginx
           image: quay.io/kubernetes-ingress-controller/nginx:0.37
           ports:
             - containerPort: 80
