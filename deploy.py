@@ -142,9 +142,24 @@ def gdm(deployment, data, create, dry_run, debug):
 
     try:
         Pool(4).starmap(create_cluster, cluster_calls)
-    except:
+    except Exception as e:
         # This is what passes for idempotency now lol
-        pass
+        print(e)
+
+    try:
+        misc_cluster = config['miscCluster']
+        create_cluster(
+            f'{deployment}-misc',
+            config['region'],
+            misc_cluster['zone'],
+            misc_cluster['machineType'] ,
+            misc_cluster['initialNodeCount'],
+            misc_cluster['initialNodeCount'],
+            50,
+            [f'role-misc-cluster']
+        )
+    except Exception as e:
+        print(e)
 
     with tempfile.NamedTemporaryFile(delete=(not debug)) as out:
         out.write(gdm.encode())
@@ -203,7 +218,7 @@ def init_support(deployment, data, dry_run, debug):
 
     # Initialize helm in edge
 
-    use_cluster(deployment, 'outer-edge', cluster['zone'])
+    use_cluster(deployment, 'misc', region=data['config']['region'])
     # Get Helm RBAC set up!
     helm_rbac = render_template('helm-rbac.yaml', data)
     subprocess.run(['kubectl', 'apply', '-f', '-'], input=helm_rbac.encode(), check=True)
@@ -327,7 +342,7 @@ def deploy(deployment, data, dry_run, debug):
             install_cmd.append('--dry-run')
         if debug:
             install_cmd.append('--debug')
-        use_cluster(deployment, 'outer-edge', data['config']['outerEdge']['zone'])
+        use_cluster(deployment, 'misc', region=data['config']['region'])
         helm(*install_cmd)
 
 
@@ -368,8 +383,9 @@ def teardown(deployment, data):
         delete_cluster(f'{deployment}-{cluster_name}', data['config']['region'])
 
     try:
-        use_cluster(deployment, 'outer-edge', data['config']['outerEdge']['zone'])
+        use_cluster(deployment, 'misc', data['config']['region'])
         kubectl('--namespace', 'outer-edge', 'delete', 'service', '--all', '--now')
+        delete_cluster(f'{deployment}-misc', data['config']['region'])
     except subprocess.CalledProcessError:
         pass
 

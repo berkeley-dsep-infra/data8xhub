@@ -1,39 +1,58 @@
 region: us-central1
 
-outerEdge:
-  machineType: n1-standard-2
+miscCluster:
+  machineType: n1-standard-4
   bootDiskSizeGb: 100
-  initialNodeCount: 1
+  initialNodeCount: 2
   zone: us-central1-a
-  proxy:
-    replicaCount: 1
+  outerEdge:
+    proxy:
+      replicaCount: 3
+    sharder:
+      replicaCount: 3
 
 clusters:
   cluster-alpha:
-    machineType: n1-standard-4
+    machineType: n1-highmem-16
     bootDiskSizeGb: 100
-    initialNodeCount: 5
+    initialNodeCount: 2
     zone: us-central1-a
     hubs:
-      hub-a: {}
-      hub-b: {}
-  cluster-beta:
-    machineType: n1-standard-4
-    bootDiskSizeGb: 100
-    initialNodeCount: 5
-    zone: us-central1-a
-    hubs:
-      hub-y: {}
-      hub-z: {}
+      hub-alpha-01: {}
+      hub-alpha-02: {}
+      hub-alpha-03: {}
+      hub-alpha-04: {}
+      hub-alpha-05: {}
+      hub-alpha-06: {}
+      hub-alpha-07: {}
+      hub-alpha-08: {}
+      hub-alpha-09: {}
+      hub-alpha-10: {}
 
+  cluster-beta:
+    machineType: n1-highmem-16
+    bootDiskSizeGb: 100
+    initialNodeCount: 2
+    zone: us-central1-a
+    hubs:
+      hub-beta-01: {}
+      hub-beta-02: {}
+      hub-beta-03: {}
+      hub-beta-04: {}
+      hub-beta-05: {}
+      hub-beta-06: {}
+      hub-beta-07: {}
+      hub-beta-08: {}
+      hub-beta-09: {}
+      hub-beta-10: {}
 
 fileservers:
   fileserver-01:
-    machineType: n1-highcpu-2
+    machineType: n1-highcpu-8
     dataDiskSizeGb: 1000
     zone: us-central1-a
   fileserver-02:
-    machineType: n1-highcpu-2
+    machineType: n1-highcpu-8
     dataDiskSizeGb: 1000
     zone: us-central1-a
 
