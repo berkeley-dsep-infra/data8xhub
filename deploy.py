@@ -287,6 +287,8 @@ def deploy(deployment, data, dry_run, debug):
             if debug:
                 install_cmd.append('--debug')
             helm(*install_cmd)
+            # Add the label required for network-policy to work
+            kubectl('label', '--overwrite', 'namespace', 'inner-edge', 'name=inner-edge')
 
     # Install outer-edge
     helm('dep', 'up', cwd='outer-edge')
