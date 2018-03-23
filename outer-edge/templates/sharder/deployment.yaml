@@ -35,7 +35,7 @@ spec:
               mountPath: /secrets/cloudsql
               readOnly: true
         - name: hubsharder
-          image: gcr.io/data8x-scratch/hubsharder:93784c7
+          image: gcr.io/data8x-scratch/hubsharder:333fd74
           imagePullPolicy: Always
           ports:
             - containerPort: 8888
