@@ -86,12 +86,9 @@ def kubectl(*args, **kwargs):
     logging.info("Executing kubectl", ' '.join(args))
     return subprocess.check_call(['kubectl'] + list(args), **kwargs)
 
-def use_cluster(deployment, cluster, zone=None, region=None):
+def use_cluster(deployment, cluster, region):
     cluster_name = '{}-{}'.format(deployment, cluster)
-    if region:
-        gcloud('beta', 'container', 'clusters', 'get-credentials', cluster_name, '--region', region)
-    else:
-        gcloud('container', 'clusters', 'get-credentials', cluster_name, '--zone', zone)
+    gcloud('beta', 'container', 'clusters', 'get-credentials', cluster_name, '--region', region)
 
 
 def create_cluster(name, region, node_zone, node_type, initial_nodecount, min_nodecount, max_nodecount, tags):
@@ -181,7 +178,7 @@ def gdm(deployment, data, create, dry_run, debug):
 def init_support(deployment, data, dry_run, debug):
 
     for name, cluster in data['config']['clusters'].items():
-        use_cluster(deployment, name, region=data['config']['region'])
+        use_cluster(deployment, name, data['config']['region'])
 
         # Get Helm RBAC set up!
         helm_rbac = render_template('helm-rbac.yaml', data)
@@ -218,7 +215,7 @@ def init_support(deployment, data, dry_run, debug):
 
     # Initialize helm in edge
 
-    use_cluster(deployment, 'misc', region=data['config']['region'])
+    use_cluster(deployment, 'misc', data['config']['region'])
     # Get Helm RBAC set up!
     helm_rbac = render_template('helm-rbac.yaml', data)
     subprocess.run(['kubectl', 'apply', '-f', '-'], input=helm_rbac.encode(), check=True)
@@ -266,7 +263,7 @@ def deploy(deployment, data, dry_run, debug):
     helm('repo', 'add', 'jupyterhub', 'https://jupyterhub.github.io/helm-chart')
 
     for name, cluster in data['config']['clusters'].items():
-        use_cluster(deployment, name, region=data['config']['region'])
+        use_cluster(deployment, name, data['config']['region'])
 
         # deploy the hubs
         helm('dep', 'up', cwd='hub')
@@ -312,7 +309,7 @@ def deploy(deployment, data, dry_run, debug):
         template_data = copy.deepcopy(data)
         # Dynamically figure out the loadbalancer IPs of the inner-edges of each cluster
         for name, cluster in template_data['config']['clusters'].items():
-            use_cluster(deployment, name, region=data['config']['region'])
+            use_cluster(deployment, name, data['config']['region'])
 
             edge_ip = subprocess.check_output([
                 'kubectl',
@@ -342,7 +339,7 @@ def deploy(deployment, data, dry_run, debug):
             install_cmd.append('--dry-run')
         if debug:
             install_cmd.append('--debug')
-        use_cluster(deployment, 'misc', region=data['config']['region'])
+        use_cluster(deployment, 'misc', data['config']['region'])
         helm(*install_cmd)
 
 
@@ -360,7 +357,7 @@ def teardown(deployment, data):
     """
     for cluster_name, cluster in data['config']['clusters'].items():
         try:
-            use_cluster(deployment, cluster_name, region=data['config']['region'])
+            use_cluster(deployment, cluster_name, data['config']['region'])
         except:
             continue
 
