@@ -7,6 +7,7 @@ miscCluster:
   zone: us-central1-a
   outerEdge:
     proxy:
+      loadBalancerIP: 104.197.5.28
       replicaCount: 3
     sharder:
       replicaCount: 3

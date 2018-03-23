@@ -1,0 +1,47 @@
+region: us-central1
+
+miscCluster:
+  machineType: n1-standard-2
+  bootDiskSizeGb: 100
+  initialNodeCount: 1
+  zone: us-central1-a
+  outerEdge:
+    proxy:
+      replicaCount: 2
+    sharder:
+      replicaCount: 2
+
+clusters:
+  cluster-alpha:
+    machineType: n1-highmem-2
+    bootDiskSizeGb: 100
+    initialNodeCount: 2
+    zone: us-central1-a
+    hubs:
+      hub-alpha-01: {}
+      hub-alpha-02: {}
+      hub-alpha-03: {}
+
+  cluster-beta:
+    machineType: n1-highmem-2
+    bootDiskSizeGb: 100
+    initialNodeCount: 2
+    zone: us-central1-a
+    hubs:
+      hub-beta-01: {}
+      hub-beta-02: {}
+      hub-beta-03: {}
+
+fileservers:
+  fileserver-01:
+    machineType: n1-highcpu-2
+    dataDiskSizeGb: 100
+    zone: us-central1-a
+  fileserver-02:
+    machineType: n1-highcpu-2
+    dataDiskSizeGb: 100
+    zone: us-central1-a
+
+project: data8x-scratch
+admins:
+  - YuviPanda@gmail.com

@@ -412,13 +412,6 @@ def main():
         help='Do not execute action'
     )
 
-    argparser.add_argument(
-        '--config',
-        action='append',
-        default=[],
-        help='List of config files to use'
-    )
-
     subparsers = argparser.add_subparsers(
         help='Actions to perform',
         dest='action'
@@ -446,9 +439,8 @@ def main():
     )
 
     args = argparser.parse_args()
-    if not args.config:
-        args.config = ['config.yaml', 'secret.yaml']
-    data = get_data(args.deployment, args.config)
+    config_files = [f'deployments/{args.deployment}/config.yaml', f'deployments/{args.deployment}/secret.yaml']
+    data = get_data(args.deployment, config_files)
     if args.action == 'gdm':
         gdm(args.deployment, data, args.create, args.dry_run, args.debug)
     elif args.action == 'init_support':
