@@ -140,7 +140,11 @@ def gdm(deployment, data, create, dry_run, debug):
             [f'deployment-{deployment}', 'role-hub-cluster']
         ))
 
-    Pool(8).starmap(create_cluster, cluster_calls)
+    try:
+        Pool(4).starmap(create_cluster, cluster_calls)
+    except:
+        # This is what passes for idempotency now lol
+        pass
 
     with tempfile.NamedTemporaryFile(delete=(not debug)) as out:
         out.write(gdm.encode())
