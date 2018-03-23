@@ -133,7 +133,7 @@ def gdm(deployment, data, create, dry_run, debug):
             f'{deployment}-{cluster_name}',
             config['region'],
             cluster['zone'],
-            'n1-standard-4',
+            cluster['machineType'],
             cluster['initialNodeCount'],
             cluster['initialNodeCount'],
             100,
