@@ -26,7 +26,8 @@ class ShardHandler(web.RequestHandler):
 
         headers = {
             'Cookie': f'hub={hub}',
-            'User-Agent': 'HubSharder'
+            'User-Agent': 'HubSharder',
+            'Host': self.request.host
         }
         req = httpclient.HTTPRequest(
             client_url, method='POST', body=body,
