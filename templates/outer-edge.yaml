@@ -9,6 +9,9 @@ region: {{ config.region }}
 deployment: {{ deployment }}
 proxy:
   replicaCount: {{ config.miscCluster.outerEdge.proxy.replicaCount }}
+  {% if config.miscCluster.outerEdge.proxy.loadBalancerIP %}
+  loadBalancerIP: {{ config.miscCluster.outerEdge.proxy.loadBalancerIP }}
+  {% endif %}
   resources:
     requests:
       cpu: 0.25
