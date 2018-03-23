@@ -1,6 +1,14 @@
 FROM python:3.6-slim-stretch
 
-RUN pip3 install --no-cache-dir tornado ruamel.yaml oauthlib psycopg2
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      libcurl4-openssl-dev \
+      libssl-dev \
+      build-essential \
+      && \
+    apt-get purge && apt-get clean
+
+RUN pip3 install --no-cache-dir tornado ruamel.yaml oauthlib psycopg2 pycurl
 
 RUN mkdir -p /srv/hubsharder
 ADD sharder.py /srv/hubsharder/sharder.py

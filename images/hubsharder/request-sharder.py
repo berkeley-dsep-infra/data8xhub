@@ -10,6 +10,13 @@ import psycopg2.extras
 
 from ltivalidator import LTILaunchValidator, LTILaunchValidationError
 from sharder import Sharder
+from tornado.httpclient import AsyncHTTPClient
+
+# Configure JupyterHub to use the curl backend for making HTTP requests,
+# rather than the pure-python implementations. The default one starts
+# being too slow to make a large number of requests to the proxy API
+# at the rate required.
+AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS lti_launch_info_v1 (
