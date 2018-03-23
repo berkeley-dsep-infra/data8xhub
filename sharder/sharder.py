@@ -1,27 +1,4 @@
-import sqlalchemy
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, UniqueConstraint, func, Index
-from sqlalchemy.orm import sessionmaker
 import psycopg2.pool
-
-Base = declarative_base()
-
-class Entry(Base):
-    __tablename__ = 'entries'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    kind = Column(String)
-    bucket = Column(String)
-
-    # No two items of same name and kind can exist
-    name_kind_constraint = UniqueConstraint('name', 'kind')
-
-    # Indexes for supporting the specific kinds of queries we are most likely to do
-    name_kind_index = Index('name', 'kind')
-    bucket_index = Index('bucket')
-
-
 
 class Sharder:
     """
