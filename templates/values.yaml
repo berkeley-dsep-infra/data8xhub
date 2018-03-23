@@ -4,11 +4,6 @@ jupyterhub:
       enabled: true
     service:
       type: ClusterIP
-    nginx:
-      resources:
-        requests:
-          cpu: 0.4
-          memory: 1Gi
     chp:
       resources:
         requests:
