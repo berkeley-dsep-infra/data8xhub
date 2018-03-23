@@ -68,8 +68,10 @@ jupyterhub:
             matchLabels:
               app: reposync
     memory:
-      limit: 128M
-      guarantee: 128M
+      limit: 1G
+      guarantee: 1G
+    cpu:
+      limit: 0.5
     image:
       name: gcr.io/data8x-scratch/user-image
       tag: v2
