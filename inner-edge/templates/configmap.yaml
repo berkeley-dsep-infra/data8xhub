@@ -63,6 +63,13 @@ data:
         {{ end }}
       }
 
+      # Preserve x-forwarded-proto if it is already set to https
+      # if not, set it to current scheme
+      map $http_x_forwarded_proto $forwarding_scheme {
+        default $scheme;
+        https https;
+      }
+
       # Make prometheus server publicly available
       server {
         server_name prometheus.{{ .Values.clusterName }};
@@ -89,7 +96,7 @@ data:
 
           # This is required for the target servers to know what
           # exactly the original protocol / URI / Host was.
-          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Forwarded-Proto $forwarding_scheme;
           proxy_set_header X-Original-URI $request_uri;
           # We explicitly use $http_host rather than $host because we want to
           # preserve the Host headers coming in from the client. $host never
