@@ -54,13 +54,26 @@ data:
         error_log stderr;
         access_log /dev/stdout;
 
-        listen 80;
+        {{ if .Values.tls.enabled }}
+        listen 443 ssl default_server;
+
+        ssl_certificate /etc/nginx/tls/tls.crt;
+        ssl_certificate_key /etc/nginx/tls/tls.key;
+        {{ else }}
+        listen 80 default_server;
+        {{ end }}
 
         location ~ ^/prometheus/(?<cluster>[a-zA-Z0-9.-]+)/(?<rest>.*)? {
           proxy_set_header Host prometheus.$cluster;
 
           proxy_pass http://$cluster/prometheus/$cluster/$rest$is_args$args;
         }
+
+        {{ if .Values.acme.enabled }}
+        location = /.well-known/acme-challenge/{{ .Values.acme.fileName }} {
+          return 200 "{{ .Values.acme.fileContents }}";
+        }
+        {{ end }}
 
         location /hub/lti/launch {
           proxy_pass http://hubsharder;

@@ -28,6 +28,11 @@ spec:
       - configMap:
           name: outer-edge-proxy-config
         name: outer-edge-proxy-config
+      {{ if .Values.tls.enabled }}
+      - name: tls
+        secret:
+          secretName: outer-edge-tls-secret
+      {{ end }}
       containers:
         - name: vts-exporter
           image: sophos/nginx-vts-exporter:v0.10.0
@@ -42,9 +47,17 @@ spec:
           image: quay.io/kubernetes-ingress-controller/nginx:0.37
           ports:
             - containerPort: 80
+            {{ if .Values.tls.enabled }}
+            - containerPort: 443
+            {{ end }}
           volumeMounts:
           - name: outer-edge-proxy-config
             mountPath: /etc/nginx/nginx.conf
             subPath: nginx.conf
+          {{ if .Values.tls.enabled }}
+          - name: tls
+            mountPath: /etc/nginx/tls
+            readOnly: true
+          {{ end }}
           resources:
 {{ toYaml .Values.proxy.resources | indent 12 }}

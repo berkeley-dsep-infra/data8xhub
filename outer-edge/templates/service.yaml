@@ -18,6 +18,12 @@ spec:
       targetPort: 80
       protocol: TCP
       name: http
+    {{ if .Values.tls.enabled }}
+    - port: 443
+      targetPort: 443
+      protocol: TCP
+      name: https
+    {{ end }}
   selector:
     app: edge
     component: proxy
