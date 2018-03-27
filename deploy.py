@@ -177,7 +177,9 @@ def gdm(deployment, data, create, dry_run, debug):
 
 def init_support(deployment, data, dry_run, debug):
 
-    for name, cluster in data['config']['clusters'].items():
+    clusters = list(data['config']['clusters'].keys())
+    clusters.append('misc')
+    for name in clusters:
         use_cluster(deployment, name, data['config']['region'])
 
         # Get Helm RBAC set up!
@@ -212,18 +214,6 @@ def init_support(deployment, data, dry_run, debug):
             if dry_run:
                 install_cmd.append('--dry-run')
             helm(*install_cmd)
-
-    # Initialize helm in edge
-
-    use_cluster(deployment, 'misc', data['config']['region'])
-    # Get Helm RBAC set up!
-    helm_rbac = render_template('helm-rbac.yaml', data)
-    subprocess.run(['kubectl', 'apply', '-f', '-'], input=helm_rbac.encode(), check=True)
-
-    # Initialize Helm!
-    subprocess.run(['helm', 'init', '--service-account', 'tiller', '--upgrade'], check=True)
-    # wait for tiller to be up
-    kubectl('rollout', 'status', '--watch', 'deployment/tiller-deploy', '--namespace=kube-system')
 
 def deploy_hub(deployment, data, dry_run, debug, cluster_name, name, hub):
     with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets, tempfile.NamedTemporaryFile() as hub_secrets:

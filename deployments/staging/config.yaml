@@ -7,9 +7,12 @@ miscCluster:
   zone: us-central1-a
   outerEdge:
     proxy:
-      replicaCount: 2
+      replicaCount: 1
     sharder:
-      replicaCount: 2
+      replicaCount: 1
+  hwuploader:
+    fileserver: fileserver-01
+    replicaCount: 1
 
 clusters:
   cluster-alpha:

@@ -29,3 +29,7 @@ sharderBuckets: |
 
 sharder:
   replicaCount: {{ config.miscCluster.outerEdge.sharder.replicaCount }}
+
+hwuploader:
+  replicaCount: {{ config.miscCluster.hwuploader.replicaCount }}
+  fileserver: {{ deployment }}-{{ config.miscCluster.hwuploader.fileserver }}

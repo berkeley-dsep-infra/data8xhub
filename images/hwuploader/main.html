@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Use simple styles here, since we only need one form -->
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+      form > div {
+        padding: 8px 0px;
+      }
+    </style>
+  </head>
+  <body>
+      <form method='POST' id="submit-form" enctype="multipart/form-data">
+        <input type="hidden" name="signed-sourcedid" value="{{ signed_sourcedid }}" />
+        <div>
+          <label for="homework-file">Select completed homework file:</label>
+          <input type="file" class="form-control-file" id="homework-file" name='homework-file' />
+        </div>
+        <div>
+          <input type="submit" id="submit" value="Submit" />
+        </div>
+      </form>
+      </div>
+  </body>
+</html>

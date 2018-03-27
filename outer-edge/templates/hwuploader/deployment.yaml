@@ -1,0 +1,48 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: hwuploader
+  labels:
+    app: outer-edge
+    component: hwuploader
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.hwuploader.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: outer-edge
+        component: hwuploader
+        chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        release: {{ .Release.Name }}
+        heritage: {{ .Release.Service }}
+    spec:
+      volumes:
+        - name: upload-dir
+          hostPath:
+            path: /mnt/fileservers/{{ .Values.hwuploader.fileserver }}/hwuploader
+      containers:
+        - name: hwuploader
+          image: gcr.io/data8x-scratch/hwuploader:58f31f5
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8888
+          args:
+            - /srv/hwuploader/app.py
+          volumeMounts:
+            - name: upload-dir
+              mountPath: /data
+              readOnly: false
+          env: 
+          - name: COOKIE_SECRET
+            value: {{ .Values.hwuploader.cookieSecret }}
+          - name: LTI_KEY
+            value: {{ .Values.lti.key | quote }}
+          - name: LTI_SECRET
+            value: {{ .Values.lti.secret | quote }}
+          - name: UPLOAD_BASE_DIR
+            value: /data/
+          resources:
+{{ toYaml .Values.hwuploader.resources | indent 12 }}

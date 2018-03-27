@@ -50,6 +50,11 @@ data:
         server hubsharder.outer-edge.svc.cluster.local;
       }
 
+      # Upstream for homework uploader
+      upstream hwuploader {
+        server hwuploader.outer-edge.svc.cluster.local;
+      }
+
       server {
         error_log stderr;
         access_log /dev/stdout;
@@ -80,6 +85,20 @@ data:
           return 200 "{{ .Values.acme.fileContents }}";
         }
         {{ end }}
+
+        location /hwuploader {
+          proxy_pass http://hwuploader;
+
+          # This is required for the target servers to know what
+          # exactly the original protocol / URI / Host was.
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Original-URI $request_uri;
+          # We explicitly use $http_host rather than $host because we want to
+          # preserve the Host headers coming in from the client. $host never
+          # includes ports, and causes notebooks to fail a cross origin check,
+          # since they check Host vs the Origin.
+          proxy_set_header Host $http_host;
+        }
 
         location /hub/lti/launch {
           proxy_pass http://hubsharder;
