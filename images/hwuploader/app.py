@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import os
 import sys
+import base64
+import json
 from jinja2 import Environment, FileSystemLoader
 from tornado import httpserver, ioloop, web, log
 from ltivalidator import LTILaunchValidator, LTILaunchValidationError
@@ -18,13 +20,13 @@ class HomeWorkHandler(web.RequestHandler):
         self.write(html)
 
     def finish_upload(self, hw):
-        signed_sourcedid = self.get_argument('signed-sourcedid')
+        signed_launch_args = self.get_argument('signed-launch-args')
 
-        sourcedid = web.decode_signed_value(
+        launch_args = json.loads(web.decode_signed_value(
             self.settings['cookie_secret'],
-            'sourcedid',
-            signed_sourcedid
-        ).decode('utf-8')
+            'launch-args',
+            signed_launch_args
+        ).decode('utf-8'))
 
         target_dir = os.path.join(self.settings['upload_base_dir'], hw)
         # Protect ourselves from path traversal attacks
@@ -34,26 +36,31 @@ class HomeWorkHandler(web.RequestHandler):
 
         os.makedirs(target_dir, exist_ok=True)
 
-        target_path = os.path.join(target_dir, sourcedid)
+        sourced_id = launch_args['lis_result_sourcedid']
+        target_path = os.path.join(target_dir, sourced_id)
         if not target_path.startswith(target_dir):
-            raise web.HTTPError(400, 'Invalid sourcedid name')
+            raise web.HTTPError(400, 'Invalid launch_args')
 
         if len(self.request.files) != 1:
             raise web.HTTPError(400, 'Only one file can be uploaded at a time')
 
-        uploaded_file =list(self.request.files.values())[0][0]
+        uploaded_file = list(self.request.files.values())[0][0]
+
+        try:
+            file_contents = uploaded_file.body.decode('utf-8')
+        except UnicodeDecodeError:
+            raise web.HTTPError(400, 'Could not decode uploaded file as UTF-8')
 
         # Explicitly just write these as binary files, so we don't fudge with encoding here.
-        with open(target_path, 'wb') as f:
-            f.write(uploaded_file.body)
+        with open(target_path, 'w') as f:
+            f.write(json.dumps(launch_args) + '\n')
+            f.write(file_contents)
 
-        log.app_log.info(f'Saved file {sourcedid} at {target_path}')
+        log.app_log.info('Saved file {target_path} for launch {launch_info}'.format(target_path=target_path, launch_info=json.dumps(launch_args)))
 
         self.write(f"Done!")
 
     def post(self, hw):
-        # FIXME: Run a process that cleans up old nonces every other minute
-        log.app_log.info(self.request.body)
         if self.request.files:
             return self.finish_upload(hw)
         else:
@@ -88,9 +95,12 @@ class HomeWorkHandler(web.RequestHandler):
             except LTILaunchValidationError as e:
                 raise web.HTTPError(401, e.message)
 
-            sourcedid = self.get_body_argument('lis_result_sourcedid')
-            signed_sourcedid = self.create_signed_value('sourcedid', sourcedid).decode('utf-8')
-            self.render_template('main.html', signed_sourcedid=signed_sourcedid)
+            launch_args = {}
+            for k, values in self.request.body_arguments.items():
+                launch_args[k] = values[0].decode() if len(values) == 1 else [v.decode() for v in values]
+
+            signed_launch_args = self.create_signed_value('launch-args', json.dumps(launch_args)).decode('utf-8')
+            self.render_template('main.html', signed_launch_args=signed_launch_args)
 
 def main():
     log.enable_pretty_logging()
