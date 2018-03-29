@@ -1,0 +1,41 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: egress-proxy
+  labels:
+    app: egress-proxy
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        # This lets us autorestart when the configmap changes!
+        checksum/config-map: {{ include (print $.Template.BasePath "/egressproxy/configmap.yaml") . | sha256sum }}
+      labels:
+        app: egress-proxy
+        chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        release: {{ .Release.Name }}
+        heritage: {{ .Release.Service }}
+    spec:
+      volumes:
+      - configMap:
+          name: egress-proxy-config
+        name: egress-proxy-config
+      containers:
+        - name: nginx
+          image: gcr.io/data8x-scratch/sniproxy:39c00ca
+          ports:
+            - containerPort: 443
+          command:
+          - sniproxy
+          - -f
+          - -c
+          - /etc/sniproxy/sniproxy.conf
+          volumeMounts:
+          - name: egress-proxy-config
+            mountPath: /etc/sniproxy
+          resources:
+{{ toYaml .Values.sniproxy.resources | indent 12 }}

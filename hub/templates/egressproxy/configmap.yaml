@@ -1,0 +1,27 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: egress-proxy-config
+data:
+  sniproxy.conf: |
+    table domains {
+        # Match exact request hostnames
+        {{ range $host := .Values.sniproxy.allowedHosts }}
+        {{ $host }}  {{ $host }}
+        {{ end }}
+    }
+
+    access_log {
+        filename /dev/stderr;
+    }
+    resolver {
+        nameserver 8.8.8.8
+
+        mode ipv4_only
+    }
+
+    listener 0.0.0.0:443 {
+        protocol tls
+        table domains
+        bad_requests log
+    }

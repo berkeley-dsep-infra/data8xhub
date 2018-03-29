@@ -15,6 +15,10 @@ miscCluster:
     replicaCount: 3
     fileserver: fileserver-01
 
+externalTraffic:
+  allowedHosts:
+  - img.youtube.com
+
 clusters:
   cluster-alpha:
     machineType: n1-highmem-16

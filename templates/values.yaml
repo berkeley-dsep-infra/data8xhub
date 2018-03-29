@@ -67,6 +67,9 @@ jupyterhub:
         - podSelector:
             matchLabels:
               app: reposync
+        - podSelector:
+            matchLabels:
+              app: egress-proxy
     memory:
       limit: 1G
       guarantee: 1G
@@ -77,3 +80,10 @@ jupyterhub:
       tag: v2
     storage:
       type: custom
+
+sniproxy:
+  resources: {}
+  allowedHosts:
+  {% for host in config.externalTraffic.allowedHosts %}
+  - {{ host }}
+  {% endfor %}

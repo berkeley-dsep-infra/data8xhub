@@ -5,6 +5,7 @@ import yaml
 import z2jh
 from tornado import gen, concurrent, log
 from concurrent.futures import ThreadPoolExecutor
+import socket
 
 def setup_homedir_sharding():
     # Inside a function to prevent scopes from leaking
@@ -50,6 +51,16 @@ def setup_homedir_sharding():
                 'name': 'home',
                 'mountPath': '/home/jovyan'
             }]
+
+            self.singleuser_extra_pod_config = {
+                'hostAliases': [
+                    {
+                        'ip': socket.gethostbyname('egress-proxy'),
+                        'hostnames': config['externalTraffic']['allowedHosts']
+                    }
+                ]
+
+            }
             return (yield super().start())
 
     c.JupyterHub.spawner_class = CustomSpawner
