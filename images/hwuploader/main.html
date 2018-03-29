@@ -12,11 +12,52 @@
       form > div {
         padding: 8px 0px;
       }
+      .hidden {
+        display: none;
+      }
     </style>
+    <script>
+      function submitData() {
+        var formData = new FormData(document.getElementById('submit-form'));
+        var request = new XMLHttpRequest();
+
+        var uploadFormDiv = document.getElementById('upload-form');
+        uploadFormDiv.classList.add('hidden');
+        uploadFormDiv.setAttribute('aria-hidden', 'true');
+
+        var inprogressDiv = document.getElementById('in-progress');
+        inprogressDiv.classList.remove('hidden');
+        inprogressDiv.setAttribute('role', 'alert');
+
+        var completedDiv = document.getElementById('completed');
+
+        request.onload = function(e) {
+          if (request.status == 200) {
+            inprogressDiv.classList.add('hidden');
+            inprogressDiv.removeAttribute('role');
+
+            completedDiv.classList.remove('hidden');
+            completedDiv.setAttribute('role', 'alert');
+          } else {
+            inprogressDiv.classList.add('hidden');
+            inprogressDiv.removeAttribute('role');
+
+            completedDiv.classList.remove('hidden');
+            completedDiv.setAttribute('role', 'alert');
+            completedDiv.innerHTML = "Error " + request.status + " occurred when trying to upload your file.<br \/>";
+          }
+        };
+
+        request.open('POST', window.location.href);
+        request.send(formData);
+        return false;
+      }
+    </script>
   </head>
   <body>
-      <form method='POST' id="submit-form" enctype="multipart/form-data">
-        <input type="hidden" name="signed-launch-args" value="{{ signed_launch_args }}" />
+    <div id='upload-form'>
+      <form method='POST' id="submit-form" enctype="multipart/form-data" onsubmit='return submitData();'>
+        <input type="hidden" name="signed-launch-args" id='signed-launch-args' value="{{ signed_launch_args }}" />
         <div>
           <label for="homework-file">Select completed homework file:</label>
           <input type="file" class="form-control-file" id="homework-file" name='homework-file' />
@@ -26,5 +67,12 @@
         </div>
       </form>
       </div>
+    </div>
+    <div id='in-progress' class='hidden'>
+      Uploading in-progress
+    </div>
+    <div id='completed' class='hidden'>
+      Your homework file has been uploaded!
+    </div>
   </body>
 </html>
