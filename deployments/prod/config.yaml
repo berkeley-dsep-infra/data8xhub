@@ -11,6 +11,9 @@ miscCluster:
       replicaCount: 3
     sharder:
       replicaCount: 3
+  hwuploader:
+    replicaCount: 3
+    fileserver: fileserver-01
 
 clusters:
   cluster-alpha:
