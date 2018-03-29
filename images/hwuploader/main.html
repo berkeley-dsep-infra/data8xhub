@@ -56,14 +56,11 @@
   </head>
   <body>
     <div id='upload-form'>
-      <form method='POST' id="submit-form" enctype="multipart/form-data" onsubmit='return submitData();'>
+      <form method='POST' id="submit-form" enctype="multipart/form-data">
         <input type="hidden" name="signed-launch-args" id='signed-launch-args' value="{{ signed_launch_args }}" />
         <div>
-          <label for="homework-file">Select completed homework file:</label>
-          <input type="file" class="form-control-file" id="homework-file" name='homework-file' />
-        </div>
-        <div>
-          <input type="submit" id="submit" value="Submit" />
+          <label for="homework-file">Select completed homework file to upload</label>
+          <input type="file" class="form-control-file" id="homework-file" name='homework-file' onchange='return submitData();' />
         </div>
       </form>
       </div>

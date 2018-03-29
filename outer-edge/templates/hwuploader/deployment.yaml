@@ -25,7 +25,7 @@ spec:
             path: /mnt/fileservers/{{ .Values.hwuploader.fileserver }}/hwuploader
       containers:
         - name: hwuploader
-          image: gcr.io/data8x-scratch/hwuploader:69376a2
+          image: gcr.io/data8x-scratch/hwuploader:c1cbc63
           imagePullPolicy: Always
           ports:
             - containerPort: 8888
