@@ -258,7 +258,7 @@ def deploy(deployment, data, dry_run, debug):
         # deploy the hubs
         helm('dep', 'up', cwd='hub')
 
-        Pool(16).starmap(partial(deploy_hub, deployment, data, dry_run, debug, name), cluster['hubs'].items())
+        Pool(4).starmap(partial(deploy_hub, deployment, data, dry_run, debug, name), cluster['hubs'].items())
 
         # Install inner-edge
         helm('dep', 'up', cwd='inner-edge')
