@@ -1,11 +1,11 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: reposync-network-policy
+  name: egress-network-policy
 spec:
   podSelector:
     matchLabels:
-      app: reposync
+      app: egress-proxy
   policyTypes:
   - Ingress
   ingress:
@@ -16,4 +16,4 @@ spec:
           app: jupyterhub
     ports:
     - protocol: TCP
-      port: 9418
+      port: 443
