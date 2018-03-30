@@ -18,6 +18,7 @@ miscCluster:
 externalTraffic:
   allowedHosts:
   - img.youtube.com
+  - www.inferentialthinking.com
 
 clusters:
   cluster-alpha:
