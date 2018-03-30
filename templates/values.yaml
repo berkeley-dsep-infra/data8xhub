@@ -75,6 +75,7 @@ jupyterhub:
       guarantee: 1G
     cpu:
       limit: 0.5
+      guarantee: 0.01
     image:
       name: gcr.io/data8x-scratch/user-image
       tag: v2
