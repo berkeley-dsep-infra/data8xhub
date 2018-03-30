@@ -76,11 +76,13 @@ class ShardHandler(web.RequestHandler):
             headers=headers, follow_redirects=False
         )
 
+        log.app_log.info(f'Attempting to proxy request to {hub} with url {client_url}')
         response = yield client.fetch(req, raise_error=False)
 
         if response.error and type(response.error) is not httpclient.HTTPError:
             self.set_status(500)
             self.write(str(response.error))
+            log.app_log.error('Proxying to {hub} failed with error {error}'.format(hub=hub, error=response.error))
         else:
             self.set_status(response.code, response.reason)
 
@@ -96,12 +98,12 @@ class ShardHandler(web.RequestHandler):
 
             if response.body:
                 self.write(response.body)
+            log.app_log.info(f'Proxying to {hub} succeeded')
 
 
     @gen.coroutine
     def post(self):
         validator = LTILaunchValidator(self.settings['consumers'])
-
         args = {}
         for k, values in self.request.body_arguments.items():
             args[k] = values[0].decode() if len(values) == 1 else [v.decode() for v in values]
@@ -135,9 +137,6 @@ class ShardHandler(web.RequestHandler):
         shard_info = json.loads((yield self.shard(username)))
 
         yield self.save_lti_info(auth_state)
-
-        #self.set_cookie('hub', shard_info['hub'], httponly=True)
-        #self.set_cookie('cluster', shard_info['cluster'], httponly=True)
 
         yield self.proxy_post(self.request.path, shard_info['ip'], shard_info['hub'])
 
