@@ -41,6 +41,8 @@ data:
       {{ range $cluster := .Values.clusterEdges }}
       upstream {{ $cluster.name }} {
         server {{ $cluster.ip }};
+
+        keepalive 64;
       }
       {{ end }}
 

@@ -13,7 +13,8 @@ data:
       include mime.types;
       default_type application/octet-stream;
 
-      gzip on;
+      # We gzip at outer-edge instead
+      gzip off;
 
       # Get metrics out!
       vhost_traffic_status_zone;
@@ -51,7 +52,7 @@ data:
       upstream hub-{{ $hub }} {
         server proxy-public.{{ $hub }}.svc.cluster.local;
 
-        keepalive 32;
+        keepalive 64;
       }
       {{ end }}
 
