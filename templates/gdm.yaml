@@ -65,6 +65,25 @@ resources:
       - IPProtocol: TCP
         ports: ["0-65535"]
 - type: compute.v1.firewall
+  name: {{ deployment }}-nfs-prometheus-firewall
+  properties:
+    name: {{ deployment }}-nfs-prometheus-firewall
+    description: Allow prometheus node-exporter access from misc-cluster to NFS hosts
+    network: global/networks/default
+    # FIXME: Open this wide to get this to work. Readonly service, not too high risk?
+    # Put in a proper firewall here soon?
+    sourceRanges: ['10.0.0.0/8']
+    #sourceTags:
+      # FIXME: I forgot to add this when creating the misc cluster, boo
+      #- deployment-{{ deployment }}
+    #  - role-misc-cluster
+    targetTags:
+      - deployment-{{ deployment }}
+      - role-nfs-host
+    allowed:
+      - IPProtocol: TCP
+        ports: [9100]
+- type: compute.v1.firewall
   name: {{ deployment }}-nfs-firewall-egress
   properties:
     name: {{ deployment }}-nfs-firewall-egress
