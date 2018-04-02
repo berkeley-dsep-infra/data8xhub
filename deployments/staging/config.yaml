@@ -64,3 +64,5 @@ fileservers:
 project: data8x-scratch
 admins:
   - YuviPanda@gmail.com
+
+domain: staging-hub.data8x.berkeley.edu

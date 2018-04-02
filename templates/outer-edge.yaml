@@ -33,3 +33,32 @@ sharder:
 hwuploader:
   replicaCount: {{ config.miscCluster.hwuploader.replicaCount }}
   fileserver: {{ deployment }}-{{ config.miscCluster.hwuploader.fileserver }}
+
+grafana:
+  serverConfigFile:
+    grafana.ini: |
+      ; instance_name = ${HOSTNAME}
+      [paths]
+      data = /var/lib/grafana/data
+      logs = /var/log/grafana
+      plugins = /var/lib/grafana/plugins
+
+      [server]
+      domain = {{ domain }}
+      root_url = https://%(domain)s/grafana/
+
+      [users]
+      allow_sign_up = false
+
+      [auth.anonymous]
+      enabled = true
+      org_name = Main Org.
+      org_role = Viewer
+      [log]
+      mode = console
+      level = info
+      [dashboards.json]
+      enabled = true
+      path = /var/lib/grafana/dashboards
+      [grafana_net]
+      url = https://grafana.net

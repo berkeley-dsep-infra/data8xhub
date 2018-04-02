@@ -89,6 +89,12 @@ data:
           proxy_pass http://cluster-support-prometheus-server.cluster-support.svc.cluster.local;
         }
 
+        location /grafana/ {
+          proxy_set_header   Host $host;
+
+          proxy_pass http://outer-edge-grafana.outer-edge.svc.cluster.local/;
+        }
+
         {{ if .Values.acme.enabled }}
         location = /.well-known/acme-challenge/{{ .Values.acme.fileName }} {
           return 200 "{{ .Values.acme.fileContents }}";
