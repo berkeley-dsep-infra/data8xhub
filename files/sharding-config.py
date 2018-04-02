@@ -14,14 +14,15 @@ def setup_homedir_sharding():
     password = os.environ['SHARDER_DB_PASSWORD']
     dbname = os.environ['SHARDER_DB_NAME']
 
-    config = z2jh.get_config('custom.full-config')
     deployment = z2jh.get_config('custom.deployment')
     nfs_server_template = '{deployment}-{name}'
     fileservers = [
         nfs_server_template.format(deployment=deployment, name=name)
-        for name in config['fileservers']
+        for name in yaml.safe_load(z2jh.get_config('custom.fileservers'))
     ]
     sharder = Sharder('localhost', username, password, dbname, 'homedir', fileservers, log.app_log)
+
+    allowed_external_hosts = z2jh.get_config('custom.allowed-external-hosts')
 
 
     class CustomSpawner(KubeSpawner):
@@ -56,7 +57,7 @@ def setup_homedir_sharding():
                 'hostAliases': [
                     {
                         'ip': socket.gethostbyname('egress-proxy'),
-                        'hostnames': config['externalTraffic']['allowedHosts']
+                        'hostnames': allowed_external_hosts
                     }
                 ]
 

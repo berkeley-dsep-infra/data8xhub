@@ -52,7 +52,11 @@ jupyterhub:
 
     extraConfigMap:
       deployment: {{ deployment|safe }}
-      full-config: {{ config|jsonify|safe }}
+      fileservers: |
+        {% for fileserver in config.fileservers %}
+        - {{ fileserver }}
+        {% endfor %}
+      allowed-external-hosts: {{ config.externalTraffic.allowedHosts|jsonify|safe }}
 
   singleuser:
     networkPolicy:
