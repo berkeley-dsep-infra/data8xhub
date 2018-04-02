@@ -16,13 +16,13 @@
       become: true
 
     - name: check if pool has been created
-      shell: zpool status pool0
+      shell: /sbin/zpool status pool0
       register: pool0_exists
       ignore_errors: True
       become: true
 
     - name: create pool0
-      shell: zpool create -f pool0 /dev/sdb
+      shell: /sbin/zpool create -f pool0 /dev/sdb
       when: pool0_exists|failed
       become: true
 
