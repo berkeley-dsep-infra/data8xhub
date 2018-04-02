@@ -77,8 +77,8 @@ jupyterhub:
       limit: 0.5
       guarantee: 0.01
     image:
-      name: gcr.io/data8x-scratch/user-image
-      tag: v2
+      name: gcr.io/data8x-scratch/user
+      tag: a7f8ca3
     storage:
       type: custom
 

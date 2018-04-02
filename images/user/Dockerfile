@@ -8,7 +8,8 @@ RUN apt-get update && \
             python3-pip \
             python3-setuptools \
             git \
-            locales
+            locales \
+            build-essential
 
 RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
     locale-gen
@@ -19,22 +20,33 @@ ENV LANGUAGE en_US.UTF-8
 
 RUN adduser --disabled-password --gecos "Default Jupyter user" jovyan
 
+# We want users to not install anything new, so no virtualenv.
 RUN pip3 install --no-cache-dir \
-         notebook \
-         ipykernel \
-         ipywidgets \
+         notebook==5.4.1 \
+         ipykernel==4.8.2 \
+         ipywidgets==7.2.0 \
          jupyterhub==0.8.1 \
+         nbresuse==0.2 \
          git+https://github.com/data-8/nbgitpuller@e7e36b5
 
-RUN jupyter serverextension enable --py nbgitpuller --sys-prefix
+# As a security precaution, I do not want compilers here.
+# The compiler is in here just for psutil, dependency of nbresuse.
+RUN apt-get purge --yes build-essential && \
+    apt-get --yes autoremove
+
+RUN jupyter serverextension enable --py nbgitpuller --sys-prefix && \
+    jupyter nbextension enable --py widgetsnbextension --sys-prefix && \
+    jupyter serverextension enable --py nbresuse --sys-prefix && \
+    jupyter nbextension install --py nbresuse --sys-prefix && \
+    jupyter nbextension enable --py nbresuse --sys-prefix
 
 # FIXME: pin versions here
 RUN pip3 install --no-cache-dir \
-         datascience \
-         scipy \
-         pandas \
-         matplotlib \
-         okpy
+         datascience==0.10.4 \
+         scipy==1.0.1 \
+         pandas==0.22.0 \
+         matplotlib==2.2.2 \
+         okpy==1.13.11
 
 WORKDIR /home/jovyan
 USER jovyan
