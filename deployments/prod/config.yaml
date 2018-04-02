@@ -8,9 +8,9 @@ miscCluster:
   outerEdge:
     proxy:
       loadBalancerIP: 104.197.5.28
-      replicaCount: 3
+      replicaCount: 10
     sharder:
-      replicaCount: 3
+      replicaCount: 5
   hwuploader:
     replicaCount: 3
     fileserver: fileserver-01
