@@ -4,6 +4,8 @@ prometheus:
   nodeExporter:
     updateStrategy:
       type: RollingUpdate
+    extraArgs:
+      collector.mountstats:
   alertmanager:
     enabled: false
   pushgateway:
