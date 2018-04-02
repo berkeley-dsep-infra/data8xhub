@@ -19,6 +19,7 @@ externalTraffic:
   allowedHosts:
   - img.youtube.com
   - www.inferentialthinking.com
+  - www.gapminder.org
 
 clusterSupport:
   prometheus:
