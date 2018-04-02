@@ -19,6 +19,17 @@ externalTraffic:
   - img.youtube.com
   - www.inferentialthinking.com
 
+clusterSupport:
+  prometheus:
+    storageSize: 20Gi
+    retention: 15d
+    resources:
+      requests:
+        cpu: "0.25"
+        memory: "512Mi"
+      limits:
+        cpu: "0.25"
+
 clusters:
   cluster-alpha:
     machineType: n1-highmem-2

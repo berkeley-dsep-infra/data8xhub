@@ -215,6 +215,27 @@ def init_support(deployment, data, dry_run, debug):
                 install_cmd.append('--dry-run')
             helm(*install_cmd)
 
+            # We have to patch prometheus-server for now, since the readiness/health probes don't take
+            # into account path prefixes.
+            prometheus_server_patch = {
+                "spec": { "template": {
+                    "spec": {
+                        "containers": [ {
+                            "name": "prometheus-server",
+                            "livenessProbe": { "httpGet": { "path": f"/prometheus/{name}/-/healthy" } },
+                            "readinessProbe": { "httpGet": { "path": f"/prometheus/{name}/-/ready" } }
+                        } ]
+                    }
+                } }
+            }
+
+            kubectl(
+                '--namespace', 'cluster-support',
+                'patch',
+                'deployment', 'cluster-support-prometheus-server',
+                '--patch', json.dumps(prometheus_server_patch)
+                )
+
 def deploy_hub(deployment, data, dry_run, debug, cluster_name, name, hub):
     with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets, tempfile.NamedTemporaryFile() as hub_secrets:
         template_data = copy.deepcopy(data)

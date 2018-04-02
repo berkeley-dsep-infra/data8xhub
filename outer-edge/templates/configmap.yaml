@@ -76,10 +76,17 @@ data:
         listen 80 default_server;
         {{ end }}
 
-        location ~ ^/prometheus/(?<cluster>[a-zA-Z0-9.-]+)/(?<rest>.*)? {
-          proxy_set_header Host prometheus.$cluster;
 
-          proxy_pass http://$cluster/prometheus/$cluster/$rest$is_args$args;
+        {{ range $cluster := .Values.clusterEdges }}
+        location ~ ^/prometheus/{{ $cluster.name }}(?<rest>.*) {
+          proxy_set_header Host prometheus.{{ $cluster.name }};
+
+          proxy_pass http://{{ $cluster.ip }}/prometheus/{{ $cluster.name }}$rest$is_args$args;
+        }
+        {{ end }}
+
+        location /prometheus/misc {
+          proxy_pass http://cluster-support-prometheus-server.cluster-support.svc.cluster.local;
         }
 
         {{ if .Values.acme.enabled }}
