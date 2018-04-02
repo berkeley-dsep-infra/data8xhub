@@ -26,7 +26,7 @@ RUN pip3 install --no-cache-dir \
          ipykernel==4.8.2 \
          ipywidgets==7.2.0 \
          jupyterhub==0.8.1 \
-         nbresuse==0.2 \
+         git+https://github.com/yuvipanda/nbresuse@2aadf39 \
          git+https://github.com/data-8/nbgitpuller@e7e36b5
 
 # As a security precaution, I do not want compilers here.

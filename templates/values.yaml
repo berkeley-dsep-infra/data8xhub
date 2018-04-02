@@ -82,7 +82,7 @@ jupyterhub:
       guarantee: 0.01
     image:
       name: gcr.io/data8x-scratch/user
-      tag: a7f8ca3
+      tag: "33644e1"
     storage:
       type: custom
 
