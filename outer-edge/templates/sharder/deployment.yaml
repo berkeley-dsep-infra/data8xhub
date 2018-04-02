@@ -23,6 +23,12 @@ spec:
       - name: csql-secret
         secret:
           secretName: csql-secret
+      hostAliases:
+        {{ range $cluster := .Values.clusterEdges }}
+        - ip: {{ $cluster.ip }}
+          hostnames:
+          - {{ $cluster.name }}
+        {{ end }}
       containers:
         - name: cloudsql-proxy
           image: gcr.io/cloudsql-docker/gce-proxy:1.11
@@ -35,7 +41,7 @@ spec:
               mountPath: /secrets/cloudsql
               readOnly: true
         - name: hubsharder
-          image: gcr.io/data8x-scratch/hubsharder:e1b2ab6
+          image: gcr.io/data8x-scratch/hubsharder:5631683
           imagePullPolicy: Always
           ports:
             - containerPort: 8888

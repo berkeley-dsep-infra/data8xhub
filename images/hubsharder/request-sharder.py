@@ -138,7 +138,7 @@ class ShardHandler(web.RequestHandler):
 
         yield self.save_lti_info(auth_state)
 
-        yield self.proxy_post(self.request.path, shard_info['ip'], shard_info['hub'])
+        yield self.proxy_post(self.request.path, shard_info['cluster'], shard_info['hub'])
 
 
 def main():

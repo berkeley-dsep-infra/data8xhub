@@ -23,7 +23,7 @@ proxy:
 sharderBuckets: |
 {% for cluster_name, cluster in config.clusters.items() %}
 {% for hub_name, hub in cluster.hubs.items() %}
-  {"cluster": "{{cluster_name}}", "hub": "{{hub_name}}", "ip": "{{ cluster.ip }}"}
+  {"cluster": "{{cluster_name}}", "hub": "{{hub_name}}"}
 {% endfor %}
 {% endfor %}
 
