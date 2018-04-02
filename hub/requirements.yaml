@@ -1,4 +1,6 @@
 dependencies:
 - name: jupyterhub
-  version: "0.7.0-4b122ad"
-  repository: "https://jupyterhub.github.io/helm-chart"
+  version: "v0.7-4c3879e"
+  repository: https://jupyterhub.github.io/helm-chart/
+  #version: "v0.7-19ed610"
+  #repository: "file:///home/yuvipanda/code/zero-to-jupyterhub-k8s/jupyterhub"
