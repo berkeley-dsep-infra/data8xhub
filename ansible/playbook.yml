@@ -88,3 +88,9 @@
       command: /usr/sbin/exportfs -a
       when: exports_written.changed
       become: true
+
+    - name: install prometheus-node-exporter
+      apt:
+        name: prometheus-node-exporter
+        state: installed
+      become: true
