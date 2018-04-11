@@ -20,6 +20,7 @@ externalTraffic:
   - img.youtube.com
   - www.inferentialthinking.com
   - www.gapminder.org
+  - upload.wikimedia.org
 
 clusterSupport:
   prometheus:
