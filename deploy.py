@@ -178,7 +178,8 @@ def gdm(deployment, data, create, dry_run, debug):
 def init_support(deployment, data, dry_run, debug):
 
     clusters = list(data['config']['clusters'].keys())
-    clusters.append('misc')
+    if 'miscCluster' in data['config']:
+        clusters.append('misc')
     for name in clusters:
         use_cluster(deployment, name, data['config']['region'])
 
@@ -313,45 +314,46 @@ def deploy(deployment, data, dry_run, debug):
             # Add the label required for network-policy to work
             kubectl('label', '--overwrite', 'namespace', 'inner-edge', 'name=inner-edge')
 
-    # Install outer-edge
-    helm('dep', 'up', cwd='outer-edge')
+    if 'miscCluster' in data['config']:
+        # Install outer-edge
+        helm('dep', 'up', cwd='outer-edge')
 
-    with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets:
-        template_data = copy.deepcopy(data)
-        # Dynamically figure out the loadbalancer IPs of the inner-edges of each cluster
-        for name, cluster in template_data['config']['clusters'].items():
-            use_cluster(deployment, name, data['config']['region'])
+        with tempfile.NamedTemporaryFile() as values, tempfile.NamedTemporaryFile() as secrets:
+            template_data = copy.deepcopy(data)
+            # Dynamically figure out the loadbalancer IPs of the inner-edges of each cluster
+            for name, cluster in template_data['config']['clusters'].items():
+                use_cluster(deployment, name, data['config']['region'])
 
-            edge_ip = subprocess.check_output([
-                'kubectl',
-                '--namespace', 'inner-edge',
-                'get', 'svc', 'proxy',
-                '-o', "jsonpath={.status.loadBalancer.ingress[0].ip}"
-            ]).decode().strip()
-            cluster['ip'] = edge_ip
+                edge_ip = subprocess.check_output([
+                    'kubectl',
+                    '--namespace', 'inner-edge',
+                    'get', 'svc', 'proxy',
+                    '-o', "jsonpath={.status.loadBalancer.ingress[0].ip}"
+                ]).decode().strip()
+                cluster['ip'] = edge_ip
 
-        values.write(render_template('outer-edge.yaml', template_data).encode())
-        values.flush()
+            values.write(render_template('outer-edge.yaml', template_data).encode())
+            values.flush()
 
-        secrets.write(render_template('secrets/outer-edge.yaml', template_data).encode())
-        secrets.flush()
+            secrets.write(render_template('secrets/outer-edge.yaml', template_data).encode())
+            secrets.flush()
 
-        install_cmd = [
-            'upgrade',
-            '--install',
-            '--wait',
-            'outer-edge',
-            '--namespace', 'outer-edge',
-            'outer-edge',
-            '-f', values.name,
-            '-f', secrets.name,
-        ]
-        if dry_run:
-            install_cmd.append('--dry-run')
-        if debug:
-            install_cmd.append('--debug')
-        use_cluster(deployment, 'misc', data['config']['region'])
-        helm(*install_cmd)
+            install_cmd = [
+                'upgrade',
+                '--install',
+                '--wait',
+                'outer-edge',
+                '--namespace', 'outer-edge',
+                'outer-edge',
+                '-f', values.name,
+                '-f', secrets.name,
+            ]
+            if dry_run:
+                install_cmd.append('--dry-run')
+            if debug:
+                install_cmd.append('--debug')
+            use_cluster(deployment, 'misc', data['config']['region'])
+            helm(*install_cmd)
 
 
 
