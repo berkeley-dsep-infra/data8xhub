@@ -104,7 +104,7 @@ def create_cluster(name, region, node_zone, node_type, initial_nodecount, min_no
         '--min-nodes', str(min_nodecount),
         '--max-nodes', str(max_nodecount),
         '--tags', ','.join(tags),
-        '--cluster-version', '1.9.4-gke.1',
+        '--cluster-version', '1.9.7-gke.0',
         '--disable-addons', 'HttpLoadBalancing,KubernetesDashboard',
         '--enable-network-policy',
         name
