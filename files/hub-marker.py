@@ -3,7 +3,7 @@ from dummyauthenticator import DummyAuthenticator
 from tornado import gen
 import os
 
-class CustomAuthenticator(DummyAuthenticator):
+class CustomAuthenticator(LTIAuthenticator):
     @gen.coroutine
     def authenticate(self, handler, data=None):
         ret = (yield super().authenticate(handler, data))
