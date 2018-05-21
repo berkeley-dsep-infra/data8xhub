@@ -27,6 +27,8 @@ RUN pip3 install --no-cache-dir \
          ipykernel==4.8.2 \
          ipywidgets==7.2.1 \
          jupyterhub==0.8.1 \
+         jupyterlab==0.32.1 \
+         nteract_on_jupyter==1.7.0 \
          git+https://github.com/yuvipanda/nbresuse@2aadf39 \
          git+https://github.com/data-8/nbgitpuller@e7e36b5 \
          git+https://github.com/yuvipanda/nbclearafter@53aebc8
@@ -42,7 +44,9 @@ RUN jupyter serverextension enable --py nbgitpuller --sys-prefix && \
     jupyter nbextension install --py nbresuse --sys-prefix && \
     jupyter nbextension enable --py nbresuse --sys-prefix && \
     jupyter nbextension install --py nbclearafter --sys-prefix && \
-    jupyter nbextension enable --py nbclearafter --sys-prefix
+    jupyter nbextension enable --py nbclearafter --sys-prefix && \
+    jupyter serverextension enable --py jupyterlab --sys-prefix && \
+    jupyter serverextension enable --py nteract_on_jupyter --sys-prefix
 
 # FIXME: pin versions here
 RUN pip3 install --no-cache-dir \
@@ -50,7 +54,7 @@ RUN pip3 install --no-cache-dir \
          scipy==1.0.1 \
          pandas==0.22.0 \
          matplotlib==2.2.2 \
-         okgrade==0.1
+         okgrade==0.3
 
 WORKDIR /home/jovyan
 USER jovyan
