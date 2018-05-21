@@ -14,6 +14,10 @@ jupyterhub:
       enabled: false
     continuous:
       enabled: false
+  auth:
+    admin:
+      users:
+        - ebfaa7263b5c00037bad563a4d70e124
   hub:
     networkPolicy:
       enabled: true

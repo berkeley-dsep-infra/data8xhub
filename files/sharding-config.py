@@ -53,6 +53,18 @@ def setup_homedir_sharding():
                 'mountPath': '/home/jovyan'
             }]
 
+            if self.user.admin:
+                self.volumes.append({
+                    'name': 'fileservers',
+                    'hostPath': {
+                        'path': '/mnt/fileservers'
+                    }
+                })
+                self.volume_mounts.append({
+                    'name': 'fileservers',
+                    'mountPath': '/home/jovyan/fileservers'
+                })
+
             self.singleuser_extra_pod_config = {
                 'hostAliases': [
                     {
