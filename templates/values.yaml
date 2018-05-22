@@ -79,8 +79,8 @@ jupyterhub:
             matchLabels:
               app: egress-proxy
     memory:
-      limit: 1G
-      guarantee: 1G
+      limit: 1536M
+      guarantee: 1536M
     cpu:
       limit: 0.5
       guarantee: 0.01
