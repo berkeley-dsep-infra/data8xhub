@@ -18,6 +18,7 @@ jupyterhub:
     admin:
       users:
         - ebfaa7263b5c00037bad563a4d70e124
+        - e64700b845ff8a836bdbe602c40a57c2
   hub:
     networkPolicy:
       enabled: true
