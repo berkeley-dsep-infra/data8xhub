@@ -25,7 +25,7 @@ externalTraffic:
 clusterSupport:
   prometheus:
     storageSize: 2000Gi
-    retention: 60d
+    retention: 240d
     resources:
       requests:
         cpu: "1"
