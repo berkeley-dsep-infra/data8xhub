@@ -54,7 +54,7 @@ RUN pip3 install --no-cache-dir \
          scipy==1.0.1 \
          pandas==0.22.0 \
          matplotlib==2.2.2 \
-         okgrade==0.3
+         okgrade==0.4.3
 
 WORKDIR /home/jovyan
 USER jovyan
