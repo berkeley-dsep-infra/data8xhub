@@ -54,7 +54,7 @@ RUN pip3 install --no-cache-dir \
          scipy==1.0.1 \
          pandas==0.22.0 \
          matplotlib==2.2.2 \
-         gofer_grader==1.0.2
+         gofer_grader==1.0.3
 
 WORKDIR /home/jovyan
 USER jovyan
